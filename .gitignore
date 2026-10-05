@@ -1,0 +1,17 @@
+# Generated audio and OCR output
+*.wav
+vision_out*.txt
+
+# Captures of a live desktop: never commit
+real_*
+*.png
+!test_screenshot.png
+
+# Compiled Swift binary (the OCR step runs as an uncompiled script)
+vision_ocr
+
+# Python / macOS
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
