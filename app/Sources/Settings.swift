@@ -14,8 +14,11 @@ struct VoiceGroup: Identifiable {
 
 final class Settings: ObservableObject {
     static let shared = Settings()
-    static let kokoroVoices = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("AI/kokoro/voices")
-    static let pythonPath = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("AI/mlx-env/bin/python").path
+    /// ~/Library/Application Support/FOKS-TTS: `venv` (Python environment) and `models/kokoro` (voices).
+    /// On the developer machine these are symlinks into ~/AI; a release would populate them itself.
+    static let home = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FOKS-TTS")
+    static let kokoroVoices = home.appendingPathComponent("models/kokoro/voices")
+    static let pythonPath = home.appendingPathComponent("venv/bin/python").path
 
     @Published var voice: String { didSet { UserDefaults.standard.set(voice, forKey: "voice") } }
     @Published var rate: Double { didSet { UserDefaults.standard.set(rate, forKey: "rate") } }

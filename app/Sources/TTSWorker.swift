@@ -12,7 +12,7 @@ final class TTSWorker {
     private(set) var isReady = false
     private(set) var hasEspeak = false
     var onReadyChanged: (() -> Void)?
-    let logURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("offline-tts-worker.log")
+    let logURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("foks-tts-worker.log")
 
     func start() {
         if let p = proc, p.isRunning { return }

@@ -41,8 +41,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ n: Notification) {
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        status.button?.image = NSImage(systemSymbolName: "text.bubble.fill", accessibilityDescription: "Offline TTS")
-        status.button?.toolTip = "Offline TTS — loading voice…"
+        status.button?.image = NSImage(systemSymbolName: "text.bubble.fill", accessibilityDescription: "FOKS TTS")
+        status.button?.toolTip = "FOKS TTS — loading voice…"
         let menu = NSMenu()
         menu.delegate = self
         status.menu = menu
@@ -51,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         popover.contentViewController = NSHostingController(rootView: RateView())
 
         TTSWorker.shared.onReadyChanged = { [weak self] in
-            self?.status.button?.toolTip = TTSWorker.shared.isReady ? "Offline TTS" : "Offline TTS — loading voice…"
+            self?.status.button?.toolTip = TTSWorker.shared.isReady ? "FOKS TTS" : "FOKS TTS — loading voice…"
             StatusModel.shared.refresh()
         }
         TTSWorker.shared.start()
@@ -110,7 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(voiceItem)
         _ = item("Settings…", ",", #selector(openSettings), mods: [.command])
         menu.addItem(.separator())
-        _ = item("Quit Offline TTS", "q", #selector(NSApplication.terminate(_:)), mods: [.command]).target = NSApp
+        _ = item("Quit FOKS TTS", "q", #selector(NSApplication.terminate(_:)), mods: [.command]).target = NSApp
     }
 
     @objc func menuWindow() { read(.window) }
@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(onPreview: { [weak self] in self?.previewVoice() },
                                                                                  onInstallAddon: { [weak self] in self?.installAddon() },
                                                                                  onRemoveAddon: { [weak self] in self?.removeAddon() })))
-            w.title = "Offline TTS Settings"
+            w.title = "FOKS TTS Settings"
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false
             settingsWindow = w
@@ -146,7 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
         let a = NSAlert()
         a.messageText = "Install the optional pronunciation add-on?"
-        a.informativeText = "This downloads two packages from PyPI: phonemizer-fork (GPL-3.0-or-later) and espeakng-loader, which bundles the eSpeak NG library (GPL-3.0), plus a few small helper libraries. They are separate from Offline TTS and licensed under the GNU General Public License, not this app's license. Their files are verified against fixed hashes. You can remove them again at any time."
+        a.informativeText = "This downloads two packages from PyPI: phonemizer-fork (GPL-3.0-or-later) and espeakng-loader, which bundles the eSpeak NG library (GPL-3.0), plus a few small helper libraries. They are separate from FOKS and licensed under the GNU General Public License, not this app's license. Their files are verified against fixed hashes. You can remove them again at any time."
         a.addButton(withTitle: "Install")
         a.addButton(withTitle: "Cancel")
         guard a.runModal() == .alertFirstButtonReturn else { return }
@@ -199,7 +199,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if CGPreflightScreenCaptureAccess() { return true }
         _ = CGRequestScreenCaptureAccess()
         alert("Screen Recording permission needed",
-              "To read an area or the whole screen, allow Offline TTS in System Settings → Privacy & Security → Screen & System Audio Recording, then try again. (Reading a window through Accessibility does not need it.)")
+              "To read an area or the whole screen, allow FOKS TTS in System Settings → Privacy & Security → Screen & System Audio Recording, then try again. (Reading a window through Accessibility does not need it.)")
         return false
     }
 

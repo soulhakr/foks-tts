@@ -17,7 +17,7 @@ final class ReadingSession: NSObject, AVAudioPlayerDelegate, ObservableObject {
     private(set) var stopped = false
     private var jobID: Int?
     private var timer: Timer?
-    private let outDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("offline-tts/\(UUID().uuidString)")
+    private let outDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("foks-tts/\(UUID().uuidString)")
 
     @Published var isPaused = false
     @Published var statusText = "Preparing…"

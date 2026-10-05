@@ -1,4 +1,6 @@
-# offline-tts
+# FOKS TTS
+
+*What does the FOKS say?* — **F**ully **O**ffline **K**okoro **S**peech (`foks-tts`).
 
 Read text from a screenshot aloud with a natural-sounding voice, **entirely on-device**.
 OCR (local vision model or Apple Vision) feeds Kokoro-82M text-to-speech. No cloud, no
@@ -24,10 +26,10 @@ image -> OCR (Gemma 3 via mlx-vlm | Apple Vision) -> text cleanup + chunking -> 
 
 This repo holds only the glue code. The environment and models live outside it:
 
-- `~/AI/mlx-env`: pinned Python 3.13 venv (uv-managed). Hash-locked install from
-  `~/AI/mlx-env-requirements.lock` with `--require-hashes`.
-- `~/AI/gemma3`: Gemma 3 12B 4-bit (from LM Studio's model store), used for VLM OCR.
-- `~/AI/kokoro`: symlink to the cached `mlx-community/Kokoro-82M-bf16` snapshot.
+- `~/Library/Application Support/FOKS-TTS/venv`: the Python 3.13 environment (hash-locked install from
+  `requirements/core.lock`). On the developer machine this is a symlink to `~/AI/mlx-env`.
+- `~/Library/Application Support/FOKS-TTS/models/kokoro`: Kokoro voices (symlink to `~/AI/kokoro`).
+- `~/AI/gemma3`: Gemma 3 12B 4-bit from LM Studio, used only by the old `screen_to_speech.sh` OCR experiment.
 - Setup details, versions, and rebuild steps: `~/AI/README.md`.
 
 ## Read-aloud with word highlight (Shottr workflow)
@@ -41,7 +43,7 @@ This repo holds only the glue code. The environment and models live outside it:
 Startup is about 10 s (uncompiled Swift plus model load); a 5 s passage takes about 15 s total.
 Test without audio: `swift read_screen.swift --image test_screenshot.png --snapshots /tmp/frames --at 0.5,2,4`.
 
-## Menubar app (OfflineTTS.app)
+## Menubar app (FOKS TTS.app)
 
 A native menubar app: read a **window**, a **selected area**, the **whole screen**, or the clipboard
 image, with a highlight that follows each spoken word, a floating speed control, and a voice picker.
@@ -59,11 +61,11 @@ image, with a highlight that follows each spoken word, a floating speed control,
 - Settings: voice (all English Kokoro voices on disk), speaking rate (0.5x to 2x, adjustable live),
   window text source, highlight color, floating controls.
 - Build: `app/build_app.sh` (uses full Xcode's toolchain; needs the Xcode.app SwiftUI macro plugin).
-  Output `app/build/OfflineTTS.app`, ad-hoc signed.
+  Output `app/build/FOKS TTS.app`, ad-hoc signed.
 - Permissions (System Settings > Privacy & Security): **Accessibility** to read windows directly,
   **Screen Recording** for area/screen OCR. Because the signature is ad-hoc, rebuilding changes the
   app's identity and macOS will ask again.
-- Headless test: `OfflineTTS --read-image test_screenshot.png --snapshots /tmp/f --at 0.5,2,4`
+- Headless test: `FOKS-TTS --read-image test_screenshot.png --snapshots /tmp/f --at 0.5,2,4`
   writes frames showing which word is highlighted at those times.
 
 ## Optional GPL pronunciation add-on

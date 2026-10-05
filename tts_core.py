@@ -55,7 +55,8 @@ def _setup_espeak():
 HAS_ESPEAK = _setup_espeak()
 
 REPO = "mlx-community/Kokoro-82M-bf16"
-VOICE_DIR = os.path.expanduser("~/AI/kokoro/voices")
+FOKS_HOME = os.environ.get("FOKS_TTS_HOME") or os.path.expanduser("~/Library/Application Support/FOKS-TTS")
+VOICE_DIR = os.path.join(FOKS_HOME, "models", "kokoro", "voices")
 SR = 24000
 _model = None
 _pipes = {}

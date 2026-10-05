@@ -1,4 +1,4 @@
-"""Resident Kokoro worker for the OfflineTTS menubar app.
+"""Resident Kokoro worker for the FOKS TTS menubar app.
 
 Protocol: newline-delimited JSON on stdin/stdout. stdout carries ONLY protocol messages
 (library prints are redirected to stderr).
