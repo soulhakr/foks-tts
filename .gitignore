@@ -6,6 +6,9 @@ vision_out*.txt
 real_*
 *.png
 !test_screenshot.png
+!app/Icon/MenuBarIcon.png
+!app/Icon/MenuBarIcon@2x.png
+!brand/swatches.png
 
 # Compiled Swift binary (the OCR step runs as an uncompiled script)
 vision_ocr
@@ -18,3 +21,4 @@ __pycache__/
 
 # Built app
 app/build/
+app/Icon/concepts_preview.png

@@ -1,0 +1,183 @@
+{
+  "name": "FOKS TTS",
+  "rule": "60% neutrals (forest or sand), 30% secondary, 10% rust accent. Never blue, violet, or yellow-orange.",
+  "tokens": {
+    "rust": {
+      "50": "#FDF0E6",
+      "100": "#FCE1D2",
+      "200": "#F7C2AA",
+      "300": "#F0A482",
+      "400": "#E88458",
+      "500": "#DE6226",
+      "600": "#B84016",
+      "700": "#893013",
+      "800": "#5C200E",
+      "900": "#22100A"
+    },
+    "forest": {
+      "50": "#EAF3EE",
+      "100": "#D8E6DE",
+      "200": "#B4CBBF",
+      "300": "#90B1A1",
+      "400": "#6D9783",
+      "500": "#4A7E67",
+      "600": "#24664C",
+      "700": "#1B4F3B",
+      "800": "#12392A",
+      "900": "#0A241B"
+    },
+    "sand": {
+      "50": "#FFFAF2",
+      "100": "#FFF3E4",
+      "200": "#F7E4CF",
+      "300": "#EED6BA",
+      "400": "#C8AE95",
+      "500": "#A28772",
+      "600": "#7E6250",
+      "700": "#5C3F31",
+      "800": "#3B1F14",
+      "900": "#22100A"
+    }
+  },
+  "themes": {
+    "dark": {
+      "background": "#0A241B",
+      "surface": "#24664C",
+      "text": "#FFFAF2",
+      "text-muted": "#EED6BA",
+      "accent": "#DE6226",
+      "on-accent": "#22100A",
+      "border": "#24664C",
+      "highlight": "#DE6226"
+    },
+    "light": {
+      "background": "#FFFAF2",
+      "surface": "#FFF3E4",
+      "text": "#22100A",
+      "text-muted": "#3B1F14",
+      "accent": "#B84016",
+      "on-accent": "#FFFAF2",
+      "border": "#EED6BA",
+      "highlight": "#DE6226"
+    }
+  },
+  "contrast": [
+    {
+      "theme": "dark",
+      "pair": "text on background",
+      "use": "body text",
+      "fg": "#FFFAF2",
+      "bg": "#0A241B",
+      "ratio": 15.77,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "dark",
+      "pair": "text-muted on background",
+      "use": "secondary text",
+      "fg": "#EED6BA",
+      "bg": "#0A241B",
+      "ratio": 11.68,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "dark",
+      "pair": "text on surface",
+      "use": "text on surface",
+      "fg": "#FFFAF2",
+      "bg": "#24664C",
+      "ratio": 6.56,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "dark",
+      "pair": "accent on background",
+      "use": "accent / links / icons",
+      "fg": "#DE6226",
+      "bg": "#0A241B",
+      "ratio": 4.59,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "dark",
+      "pair": "on-accent on accent",
+      "use": "button label",
+      "fg": "#22100A",
+      "bg": "#DE6226",
+      "ratio": 5.13,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "light",
+      "pair": "text on background",
+      "use": "body text",
+      "fg": "#22100A",
+      "bg": "#FFFAF2",
+      "ratio": 17.63,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "light",
+      "pair": "text-muted on background",
+      "use": "secondary text",
+      "fg": "#3B1F14",
+      "bg": "#FFFAF2",
+      "ratio": 14.52,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "light",
+      "pair": "text on surface",
+      "use": "text on surface",
+      "fg": "#22100A",
+      "bg": "#FFF3E4",
+      "ratio": 16.74,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "light",
+      "pair": "accent on background",
+      "use": "accent / links / icons",
+      "fg": "#B84016",
+      "bg": "#FFFAF2",
+      "ratio": 5.34,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    },
+    {
+      "theme": "light",
+      "pair": "on-accent on accent",
+      "use": "button label",
+      "fg": "#FFFAF2",
+      "bg": "#B84016",
+      "ratio": 5.34,
+      "AA text (4.5)": true,
+      "AA large/UI (3.0)": true
+    }
+  ],
+  "hues_hsl_deg": {
+    "rust-500": [
+      20,
+      74,
+      51
+    ],
+    "forest-600": [
+      156,
+      48,
+      27
+    ],
+    "sand-100": [
+      33,
+      100,
+      95
+    ]
+  }
+}

@@ -41,7 +41,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ n: Notification) {
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        status.button?.image = NSImage(systemSymbolName: "text.bubble.fill", accessibilityDescription: "FOKS TTS")
+        if let url = Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png"), let img = NSImage(contentsOf: url) {
+            img.size = NSSize(width: 18, height: 18)
+            img.isTemplate = true
+            status.button?.image = img
+        } else {
+            status.button?.image = NSImage(systemSymbolName: "text.bubble.fill", accessibilityDescription: "FOKS TTS")
+        }
         status.button?.toolTip = "FOKS TTS — loading voice…"
         let menu = NSMenu()
         menu.delegate = self

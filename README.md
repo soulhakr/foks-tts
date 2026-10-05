@@ -84,6 +84,19 @@ add-on teaches it to sound them out using eSpeak NG. Those packages are **GPL-li
 - Verified in a fresh venv built from the hash-locked files: core only runs (`espeak = False`), the add-on
   installs and enables `espeak = True`, removal reverts it, and a corrupted hash is rejected.
 
+## Brand
+
+Colors, themes, contrast checks and guardrails are in [`brand/BRAND.md`](brand/BRAND.md); the single source of
+truth is `brand/palette.json` (rust on forest green for dark, rust on sand for light), and the icon generator reads it.
+
+## Icon
+
+A friendly red fox with a speech bubble, drawn procedurally by `app/Icon/make_icon.swift`
+(`swift make_icon.swift`, then `iconutil -c icns` as in the script header). Two palettes are included
+(`rust-forest` is the default, `rust-sand` is the light variant); change
+`chosenPalette` to switch. The fox is a deeper rust/copper than Firefox's yellow-orange and sits on green,
+charcoal or cream, never blue or purple, so the app is not mistaken for Firefox/Mozilla or GitLab.
+
 ## Running offline
 
 Scripts set `HF_HUB_OFFLINE=1`. To prove nothing touches the network:
