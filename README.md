@@ -15,6 +15,9 @@ image -> OCR (Gemma 3 via mlx-vlm | Apple Vision) -> text cleanup + chunking -> 
 | `screen_to_speech.sh` | Pipeline: `./screen_to_speech.sh <image.png> [vlm\|vision]`, writes `<image>_speech.wav` (`PLAY=1` to play) |
 | `speak.py` | Kokoro driver: cleans symbols, chunks text, retries failed chunks by splitting. Reads text on stdin |
 | `vision_ocr.swift` | Apple Vision OCR, run uncompiled (`swift vision_ocr.swift img.png`) so no binary is installed |
+| `read_clipboard.sh` / `read_screen.swift` | Read the clipboard image aloud in a small window that **highlights the current word** (Esc quits, Space pauses) |
+| `tts_core.py` / `speak_words.py` | Kokoro helpers (cleanup, chunking, per-word timestamps, the SineGen fix) and the one-shot CLI used by `read_screen.swift` |
+| `app/` | The menubar app: Swift sources, `tts_worker.py`, `Info.plist`, `build_app.sh` |
 | `test_screenshot.png` | Synthetic test image |
 
 ## Requirements
@@ -27,6 +30,42 @@ This repo holds only the glue code. The environment and models live outside it:
 - `~/AI/kokoro`: symlink to the cached `mlx-community/Kokoro-82M-bf16` snapshot.
 - Setup details, versions, and rebuild steps: `~/AI/README.md`.
 
+## Read-aloud with word highlight (Shottr workflow)
+
+1. Capture an area with Shottr (it is set to copy to the clipboard after capture).
+2. Run `./read_clipboard.sh` (bind it to a hotkey with a Shortcut: *Run Shell Script* action,
+   then add a keyboard shortcut in the shortcut's details).
+3. OCR runs with Apple Vision (word-level boxes), Kokoro speaks, and the window highlights each
+   word as it is spoken. Timing comes from Kokoro's own per-token timestamps.
+
+Startup is about 10 s (uncompiled Swift plus model load); a 5 s passage takes about 15 s total.
+Test without audio: `swift read_screen.swift --image test_screenshot.png --snapshots /tmp/frames --at 0.5,2,4`.
+
+## Menubar app (OfflineTTS.app)
+
+A native menubar app: read a **window**, a **selected area**, the **whole screen**, or the clipboard
+image, with a highlight that follows each spoken word, a floating speed control, and a voice picker.
+
+| Hotkey | Action |
+|---|---|
+| ⌃⌥⌘W / A / S | Read a window / a selected area / the whole screen |
+| ⌃⌥⌘V | Read the clipboard image (works with Shottr's copy-to-clipboard) |
+| ⌃⌥⌘P / ⌃⌥⌘. | Pause-resume / stop |
+
+- **Windows are read through the macOS Accessibility API** (the text VoiceOver sees, with exact word
+  positions), falling back to OCR. Areas and the full screen use Apple Vision OCR.
+- A resident Python worker (`app/tts_worker.py`) keeps Kokoro loaded and streams audio chunk by chunk,
+  so speech starts after the first sentence. Everything is offline.
+- Settings: voice (all English Kokoro voices on disk), speaking rate (0.5x to 2x, adjustable live),
+  window text source, highlight color, floating controls.
+- Build: `app/build_app.sh` (uses full Xcode's toolchain; needs the Xcode.app SwiftUI macro plugin).
+  Output `app/build/OfflineTTS.app`, ad-hoc signed.
+- Permissions (System Settings > Privacy & Security): **Accessibility** to read windows directly,
+  **Screen Recording** for area/screen OCR. Because the signature is ad-hoc, rebuilding changes the
+  app's identity and macOS will ask again.
+- Headless test: `OfflineTTS --read-image test_screenshot.png --snapshots /tmp/f --at 0.5,2,4`
+  writes frames showing which word is highlighted at those times.
+
 ## Running offline
 
 Scripts set `HF_HUB_OFFLINE=1`. To prove nothing touches the network:
@@ -37,8 +76,9 @@ sandbox-exec -p '(version 1)(allow default)(deny network*)' ./screen_to_speech.s
 
 ## Known issues
 
-- `mlx-audio` 0.4.4's Kokoro raises an input-dependent `[broadcast_shapes]` error on some
-  text. `speak.py` works around it by chunking and retrying. Voices are loaded from a local
+- `mlx-audio` 0.4.4's Kokoro raised an input-dependent `[broadcast_shapes]` error (a float rounding
+  bug in `SineGen._f02sine` when the audio length is a multiple of 300 samples). `tts_core.py` patches
+  it at import by trimming the sine wave to the pitch-curve length; chunk-splitting remains as a fallback. Voices are loaded from a local
   path because the library otherwise defaults to fetching from a different repo.
 - Gemma 3 is inconsistent on cluttered full screens; use a cropped region. Apple Vision is
   exhaustive but noisy on UI.
