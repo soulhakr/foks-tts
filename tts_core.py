@@ -4,7 +4,7 @@ Used by speak_words.py (one-shot CLI) and app/tts_worker.py (resident worker for
 Works around an input-dependent mlx-audio 0.4.4 'broadcast_shapes' failure by retrying a failed
 chunk in two halves.
 """
-import os, re, sys
+import os, re, sys, types
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 import numpy as np
 from mlx_audio.tts.utils import load_model
@@ -25,6 +25,34 @@ def _patch_sinegen():
 
 
 _patch_sinegen()
+
+
+def _setup_espeak():
+    """eSpeak NG is an OPTIONAL, separately installed pronunciation fallback (GPL-licensed packages
+    phonemizer-fork + espeakng-loader). mlx-audio 0.4.4 imports misaki.espeak unconditionally, so when
+    the optional packages are absent we register a tiny stand-in module whose constructors raise; that
+    makes mlx-audio fall back to "OOD words will be skipped" instead of failing to start."""
+    try:
+        import misaki.espeak  # noqa: F401  (real module: needs the optional packages)
+        return True
+    except Exception:
+        stub = types.ModuleType("misaki.espeak")
+
+        class EspeakFallback:
+            def __init__(self, *a, **k):
+                raise RuntimeError("optional eSpeak NG pronunciation fallback is not installed")
+
+        class EspeakG2P(EspeakFallback):
+            pass
+
+        stub.EspeakFallback, stub.EspeakG2P = EspeakFallback, EspeakG2P
+        sys.modules["misaki.espeak"] = stub
+        import misaki
+        misaki.espeak = stub
+        return False
+
+
+HAS_ESPEAK = _setup_espeak()
 
 REPO = "mlx-community/Kokoro-82M-bf16"
 VOICE_DIR = os.path.expanduser("~/AI/kokoro/voices")
@@ -74,8 +102,9 @@ def align(toks, idx, cleaned):
         n = len(text.replace(" ", ""))
         while n > 0 and k < len(idx):
             take = min(n, len(rem[k]) - pos)
-            sp = spans.setdefault(idx[k], [s, e])
-            sp[1] = e
+            if s is not None:
+                sp = spans.setdefault(idx[k], [s, e])
+                sp[1] = e
             pos += take
             n -= take
             if pos >= len(rem[k]):
@@ -99,8 +128,10 @@ def synth(idx, cleaned, voice):
         for r in pipe_for(voice)(text, voice=voice_path(voice)):
             a = np.asarray(r.output.audio).reshape(-1)
             for t in getattr(r, "tokens", None) or []:
-                if t.start_ts is not None and t.end_ts is not None:
-                    toks.append((t.text, t.start_ts + off, t.end_ts + off))
+                # keep tokens without timestamps (e.g. skipped out-of-dictionary words): their characters
+                # must still be consumed or every later word would be matched to the wrong token
+                has = t.start_ts is not None and t.end_ts is not None
+                toks.append((t.text, t.start_ts + off if has else None, t.end_ts + off if has else None))
             audio.append(a)
             off += len(a) / SR
         if not audio:

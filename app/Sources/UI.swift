@@ -52,12 +52,31 @@ struct RateView: View {
     }
 }
 
+/// Permission and engine status shown in Settings. (An ObservableObject rather than @State, because
+/// @State is a macro in recent SDKs and the Command Line Tools do not ship the SwiftUI macro plugin.)
+final class StatusModel: ObservableObject {
+    static let shared = StatusModel()
+    @Published var axOK = AXText.trusted(prompt: false)
+    @Published var scOK = CGPreflightScreenCaptureAccess()
+    @Published var ready = TTSWorker.shared.isReady
+    @Published var espeak = TTSWorker.shared.hasEspeak
+    @Published var busy = false
+    @Published var error: String?
+
+    func refresh() {
+        axOK = AXText.trusted(prompt: false)
+        scOK = CGPreflightScreenCaptureAccess()
+        ready = TTSWorker.shared.isReady
+        espeak = TTSWorker.shared.hasEspeak
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var s = Settings.shared
-    @State private var axOK = AXText.trusted(prompt: false)
-    @State private var scOK = CGPreflightScreenCaptureAccess()
-    @State private var ready = TTSWorker.shared.isReady
+    @ObservedObject var status = StatusModel.shared
     var onPreview: () -> Void
+    var onInstallAddon: () -> Void
+    var onRemoveAddon: () -> Void
 
     var body: some View {
         Form {
@@ -96,33 +115,42 @@ struct SettingsView: View {
                 LabeledContent("Pause / resume", value: "⌃⌥⌘P")
                 LabeledContent("Stop", value: "⌃⌥⌘.")
             }
+            Section("Extended pronunciation (optional)") {
+                Text("Kokoro skips words that are missing from its dictionary, such as names, product names and jargon. An optional add-on teaches it to sound them out. It is a separate download under the GNU GPL v3 (eSpeak NG) and is not part of this app.")
+                    .font(.caption).foregroundStyle(.secondary)
+                LabeledContent("eSpeak NG pronunciation") {
+                    HStack {
+                        Text(status.espeak ? "Installed" : "Not installed")
+                            .foregroundStyle(status.espeak ? .green : .secondary)
+                        if status.busy { ProgressView().controlSize(.small) }
+                        else if status.espeak { Button("Remove…", action: onRemoveAddon) }
+                        else { Button("Install…", action: onInstallAddon) }
+                    }
+                }
+                if let e = status.error { Text(e).font(.caption).foregroundStyle(.red) }
+            }
             Section("Permissions & status") {
-                LabeledContent("Voice engine", value: ready ? "Ready (offline)" : "Loading…")
+                LabeledContent("Voice engine", value: status.ready ? "Ready (offline)" : "Loading…")
                 LabeledContent("Accessibility (read windows directly)") {
                     HStack {
-                        Text(axOK ? "Granted" : "Not granted").foregroundStyle(axOK ? .green : .orange)
-                        if !axOK { Button("Grant…") { _ = AXText.trusted(prompt: true); openPane("Privacy_Accessibility") } }
+                        Text(status.axOK ? "Granted" : "Not granted").foregroundStyle(status.axOK ? .green : .orange)
+                        if !status.axOK { Button("Grant…") { _ = AXText.trusted(prompt: true); openPane("Privacy_Accessibility") } }
                     }
                 }
                 LabeledContent("Screen Recording (OCR of areas/screen)") {
                     HStack {
-                        Text(scOK ? "Granted" : "Not granted").foregroundStyle(scOK ? .green : .orange)
-                        if !scOK { Button("Grant…") { _ = CGRequestScreenCaptureAccess(); openPane("Privacy_ScreenCapture") } }
+                        Text(status.scOK ? "Granted" : "Not granted").foregroundStyle(status.scOK ? .green : .orange)
+                        if !status.scOK { Button("Grant…") { _ = CGRequestScreenCaptureAccess(); openPane("Privacy_ScreenCapture") } }
                     }
                 }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 640)
-        .onAppear { refresh() }
-        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in refresh() }
+        .frame(width: 480, height: 760)
+        .onAppear { status.refresh() }
+        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in status.refresh() }
     }
 
-    private func refresh() {
-        axOK = AXText.trusted(prompt: false)
-        scOK = CGPreflightScreenCaptureAccess()
-        ready = TTSWorker.shared.isReady
-    }
     private func openPane(_ name: String) {
         if let u = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(name)") { NSWorkspace.shared.open(u) }
     }

@@ -1,0 +1,25 @@
+# OPTIONAL, installed only on request. phonemizer-fork is GPL-3.0-or-later and espeakng-loader bundles the
+# eSpeak NG library (GPL-3.0). They give Kokoro a pronunciation fallback for words missing from its dictionary.
+# Not part of the default install and never bundled in releases of this project.
+attrs==26.1.0
+babel==2.18.0
+cloudpickle==3.1.2
+csvw==4.1.0
+dlinfo==2.0.0
+espeakng-loader==0.2.4
+isodate==0.7.2
+joblib==1.6.0
+jsonschema-specifications==2025.9.1
+jsonschema==4.26.0
+language-tags==1.3.1
+phonemizer-fork==3.3.2
+pyparsing==3.3.3
+python-dateutil==2.9.0.post0
+rdflib==7.6.0
+referencing==0.37.0
+rfc3986==1.5.0
+rpds-py==2026.9.1
+segments==2.4.0
+six==1.17.0
+termcolor==3.3.0
+uritemplate==4.2.0

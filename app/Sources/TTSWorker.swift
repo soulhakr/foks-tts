@@ -10,6 +10,7 @@ final class TTSWorker {
     private var handlers: [Int: ([String: Any]) -> Void] = [:]
     private var nextID = 1
     private(set) var isReady = false
+    private(set) var hasEspeak = false
     var onReadyChanged: (() -> Void)?
     let logURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("offline-tts-worker.log")
 
@@ -55,6 +56,14 @@ final class TTSWorker {
         proc = nil
     }
 
+    /// Relaunch the Python worker (e.g. after installing or removing the optional pronunciation add-on).
+    func restart() {
+        stop()
+        isReady = false
+        onReadyChanged?()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.start() }
+    }
+
     private func ingest(_ d: Data) {
         buffer.append(d)
         while let nl = buffer.firstIndex(of: 0x0A) {
@@ -63,6 +72,7 @@ final class TTSWorker {
             guard let obj = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any] else { continue }
             if obj["ready"] as? Bool == true {
                 isReady = true
+                hasEspeak = obj["espeak"] as? Bool ?? false
                 onReadyChanged?()
             } else if let id = obj["id"] as? Int {
                 handlers[id]?(obj)

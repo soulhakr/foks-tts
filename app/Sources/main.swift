@@ -52,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         TTSWorker.shared.onReadyChanged = { [weak self] in
             self?.status.button?.toolTip = TTSWorker.shared.isReady ? "Offline TTS" : "Offline TTS — loading voice…"
+            StatusModel.shared.refresh()
         }
         TTSWorker.shared.start()
         Settings.shared.$rate.sink { [weak self] r in self?.overlay?.session.setRate(r) }.store(in: &bag)
@@ -128,7 +129,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc func openSettings() {
         if settingsWindow == nil {
-            let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(onPreview: { [weak self] in self?.previewVoice() })))
+            let w = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(onPreview: { [weak self] in self?.previewVoice() },
+                                                                                 onInstallAddon: { [weak self] in self?.installAddon() },
+                                                                                 onRemoveAddon: { [weak self] in self?.removeAddon() })))
             w.title = "Offline TTS Settings"
             w.styleMask = [.titled, .closable]
             w.isReleasedWhenClosed = false
@@ -137,6 +140,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.center()
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    func installAddon() {
+        NSApp.activate(ignoringOtherApps: true)
+        let a = NSAlert()
+        a.messageText = "Install the optional pronunciation add-on?"
+        a.informativeText = "This downloads two packages from PyPI: phonemizer-fork (GPL-3.0-or-later) and espeakng-loader, which bundles the eSpeak NG library (GPL-3.0), plus a few small helper libraries. They are separate from Offline TTS and licensed under the GNU General Public License, not this app's license. Their files are verified against fixed hashes. You can remove them again at any time."
+        a.addButton(withTitle: "Install")
+        a.addButton(withTitle: "Cancel")
+        guard a.runModal() == .alertFirstButtonReturn else { return }
+        StatusModel.shared.busy = true
+        StatusModel.shared.error = nil
+        OptionalPackages.install { err in
+            StatusModel.shared.busy = false
+            StatusModel.shared.error = err
+            if err == nil { TTSWorker.shared.restart() }
+        }
+    }
+
+    func removeAddon() {
+        StatusModel.shared.busy = true
+        StatusModel.shared.error = nil
+        OptionalPackages.uninstall { err in
+            StatusModel.shared.busy = false
+            StatusModel.shared.error = err
+            if err == nil { TTSWorker.shared.restart() }
+        }
     }
 
     func previewVoice() {

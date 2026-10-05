@@ -57,7 +57,7 @@ def run(job):
 def main():
     core.pipe_for("af_heart")  # load model + American pipeline up front
     threading.Thread(target=reader, daemon=True).start()
-    send({"ready": True})
+    send({"ready": True, "espeak": core.HAS_ESPEAK})
     while True:
         job = jobs.get()
         if job is None:

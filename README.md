@@ -66,6 +66,22 @@ image, with a highlight that follows each spoken word, a floating speed control,
 - Headless test: `OfflineTTS --read-image test_screenshot.png --snapshots /tmp/f --at 0.5,2,4`
   writes frames showing which word is highlighted at those times.
 
+## Optional GPL pronunciation add-on
+
+Kokoro skips words that are missing from its dictionary (names, product names, jargon). An optional
+add-on teaches it to sound them out using eSpeak NG. Those packages are **GPL-licensed**, so they are
+**not part of the default install** and are never bundled:
+
+- Default install: `requirements/core.lock` (69 packages, no GPL code, about 460 MB).
+- Add-on: `requirements/optional-gpl-pronunciation.lock` (`phonemizer-fork` GPL-3.0+, `espeakng-loader`
+  which bundles eSpeak NG GPL-3.0, plus 20 small helper packages). Install and remove it from
+  *Settings > Extended pronunciation* in the app, which shows the license notice and asks first. Or:
+  `uv pip install --python <venv>/bin/python --require-hashes --no-deps -r requirements/optional-gpl-pronunciation.lock`
+- `tts_core.py` registers a stand-in for `misaki.espeak` when the add-on is absent (mlx-audio 0.4.4
+  otherwise refuses to start without it), and aligns word timing correctly around skipped words.
+- Verified in a fresh venv built from the hash-locked files: core only runs (`espeak = False`), the add-on
+  installs and enables `espeak = True`, removal reverts it, and a corrupted hash is rejected.
+
 ## Running offline
 
 Scripts set `HF_HUB_OFFLINE=1`. To prove nothing touches the network:
