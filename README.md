@@ -18,6 +18,26 @@ accounts, no network at run time. Apple silicon only.
 image -> OCR (Gemma 3 via mlx-vlm | Apple Vision) -> text cleanup + chunking -> Kokoro (mlx-audio) -> WAV
 ```
 
+## Install
+
+Requirements: an Apple silicon Mac on macOS 14 or newer, the Command Line Tools (`xcode-select --install`),
+and [uv](https://docs.astral.sh/uv/) (the script installs it with Homebrew if you have Homebrew).
+
+```bash
+git clone <this repo> && cd foks-tts
+./install.sh
+```
+
+It creates a uv-managed Python 3.13 environment from the hash-locked `requirements/core.lock`, downloads the
+Kokoro model at a pinned revision and verifies its SHA-256, speaks a test sentence offline, then builds
+`FOKS TTS.app` and installs it to `~/Applications` (including the Services-menu entry). Everything lives in
+`~/Library/Application Support/FOKS-TTS`. Options: `--no-app` (environment and model only), `--force`
+(rebuild). It is safe to re-run, and it leaves a symlinked developer setup alone. `./uninstall.sh` removes it
+(it asks before deleting the environment and model).
+
+After installing, open the app, grant Accessibility (and Screen Recording for area and full-screen
+reading) in its Settings, and try Control-Option-Command-T on some selected text.
+
 ## Files
 
 | File | Purpose |
@@ -29,16 +49,6 @@ image -> OCR (Gemma 3 via mlx-vlm | Apple Vision) -> text cleanup + chunking -> 
 | `tts_core.py` / `speak_words.py` | Kokoro helpers (cleanup, chunking, per-word timestamps, the SineGen fix) and the one-shot CLI used by `read_screen.swift` |
 | `app/` | The menubar app: Swift sources, `tts_worker.py`, `Info.plist`, `build_app.sh` |
 | `test_screenshot.png` | Synthetic test image |
-
-## Requirements
-
-This repo holds only the glue code. The environment and models live outside it:
-
-- `~/Library/Application Support/FOKS-TTS/venv`: the Python 3.13 environment (hash-locked install from
-  `requirements/core.lock`). On the developer machine this is a symlink to `~/AI/mlx-env`.
-- `~/Library/Application Support/FOKS-TTS/models/kokoro`: Kokoro voices (symlink to `~/AI/kokoro`).
-- `~/AI/gemma3`: Gemma 3 12B 4-bit from LM Studio, used only by the old `screen_to_speech.sh` OCR experiment.
-- Setup details, versions, and rebuild steps: `~/AI/README.md`.
 
 ## Read-aloud with word highlight (Shottr workflow)
 

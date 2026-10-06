@@ -56,7 +56,8 @@ HAS_ESPEAK = _setup_espeak()
 
 REPO = "mlx-community/Kokoro-82M-bf16"
 FOKS_HOME = os.environ.get("FOKS_TTS_HOME") or os.path.expanduser("~/Library/Application Support/FOKS-TTS")
-VOICE_DIR = os.path.join(FOKS_HOME, "models", "kokoro", "voices")
+MODEL_DIR = os.path.join(FOKS_HOME, "models", "kokoro")        # populated by install.sh
+VOICE_DIR = os.path.join(MODEL_DIR, "voices")
 SR = 24000
 _model = None
 _pipes = {}
@@ -70,7 +71,8 @@ def pipe_for(voice):
     """British voices (b*) need lang_code 'b'; everything else we offer is American."""
     global _model
     if _model is None:
-        _model = load_model(REPO)
+        # Prefer the model folder installed by install.sh; fall back to the Hugging Face cache (developer setups).
+        _model = load_model(MODEL_DIR if os.path.isfile(os.path.join(MODEL_DIR, "config.json")) else REPO)
     lang = "b" if voice.startswith("b") else "a"
     if lang not in _pipes:
         _pipes[lang] = KokoroPipeline(lang_code=lang, model=_model, repo_id=REPO)
