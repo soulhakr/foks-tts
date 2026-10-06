@@ -114,7 +114,7 @@ enum AXText {
         if win == nil { Thread.sleep(forTimeInterval: 0.4); win = window(of: app, id: windowID, rectCG: rectCG) }
         guard let root = win else { Log.write("AX: no AX window for pid \(pid) windowID \(windowID)"); return nil }
 
-        let deadline = Date().addingTimeInterval(timeout)
+        var deadline = Date().addingTimeInterval(timeout)
         var out: [Word] = []
         var visited = 0
 
@@ -154,6 +154,15 @@ enum AXText {
             for c in (attr(el, kAXChildrenAttribute) as? [AXUIElement]) ?? [] { walk(c, depth: depth + 1) }
         }
         walk(root, depth: 0)
+        // Chromium/Electron build their accessibility tree a moment after being asked, so a first walk of a
+        // web-based window often finds only a handful of elements. If it looks like that, wait and walk again.
+        for delay in [0.7, 1.5] where out.count < 3 && visited < 40 {
+            Log.write("AX: only \(visited) elements / \(out.count) words; retrying after \(delay)s")
+            Thread.sleep(forTimeInterval: delay)
+            out = []; visited = 0
+            deadline = Date().addingTimeInterval(timeout)
+            walk(root, depth: 0)
+        }
         Log.write("AX: visited \(visited) elements, \(out.count) words")
         return out
     }
