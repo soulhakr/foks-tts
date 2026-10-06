@@ -24,6 +24,10 @@ final class Settings: ObservableObject {
     @Published var rate: Double { didSet { UserDefaults.standard.set(rate, forKey: "rate") } }
     @Published var highlight: String { didSet { UserDefaults.standard.set(highlight, forKey: "highlight") } }
     @Published var showControls: Bool { didSet { UserDefaults.standard.set(showControls, forKey: "showControls") } }
+    /// Pause briefly between titles, body text and buttons or other controls.
+    @Published var structurePauses: Bool { didSet { UserDefaults.standard.set(structurePauses, forKey: "structurePauses") } }
+    /// Read button, checkbox and similar control labels when reading a window through Accessibility.
+    @Published var readControls: Bool { didSet { UserDefaults.standard.set(readControls, forKey: "readControls") } }
     /// Where text comes from when a window is chosen: "auto" (accessibility, else OCR), "accessibility", "ocr".
     @Published var windowSource: String { didSet { UserDefaults.standard.set(windowSource, forKey: "windowSource") } }
 
@@ -35,6 +39,8 @@ final class Settings: ObservableObject {
         highlight = d.string(forKey: "highlight") ?? "yellow"
         showControls = d.object(forKey: "showControls") as? Bool ?? true
         windowSource = d.string(forKey: "windowSource") ?? "auto"
+        structurePauses = d.object(forKey: "structurePauses") as? Bool ?? true
+        readControls = d.object(forKey: "readControls") as? Bool ?? true
     }
 
     static let highlightChoices: [(id: String, name: String, color: NSColor)] = [

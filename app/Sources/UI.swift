@@ -106,6 +106,8 @@ struct SettingsView: View {
                     ForEach(Settings.highlightChoices, id: \.id) { Text($0.name).tag($0.id) }
                 }
                 Toggle("Show floating controls while reading", isOn: $s.showControls)
+                Toggle("Pause between titles, body text and buttons", isOn: $s.structurePauses)
+                Toggle("Read button and control labels in windows", isOn: $s.readControls)
             }
             Section("Shortcuts") {
                 LabeledContent("Read a window", value: "⌃⌥⌘W")
@@ -147,7 +149,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 760)
+        .frame(width: 480, height: 820)
         .onAppear { status.refresh() }
         .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in status.refresh() }
     }

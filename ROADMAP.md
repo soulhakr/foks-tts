@@ -33,6 +33,13 @@ permissively licensed ones (verify each model's license before use).
 **Done when** a cluttered full-screen capture reads in a sensible order more reliably than Apple Vision alone, with a
 highlight, and the model path is entirely optional and offline.
 
+## Better section detection
+
+Sections (title, body, control) are detected today from accessibility roles where an app provides them (web
+headings, buttons) and from type size and isolation for OCR. Native apps rarely mark headings, so a window title
+inside a native app is read as body text. Ideas: use the font size that accessibility exposes for attributed text
+(`AXFont`), and let the optional vision model above label sections (title, body, controls) semantically.
+
 ## Signed and notarized DMG, then a Homebrew cask (later)
 
 Needs a paid Apple Developer ID, which is deferred. Today the app is built from source (`./install.sh`) and ad-hoc signed,

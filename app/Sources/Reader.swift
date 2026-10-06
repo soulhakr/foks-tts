@@ -30,7 +30,7 @@ final class ReadingSession: NSObject, AVAudioPlayerDelegate, ObservableObject {
     init(words: [Word]) { self.words = words }
 
     func begin() {
-        jobID = TTSWorker.shared.speak(words: words.map { $0.text }, voice: Settings.shared.voice, outDir: outDir) { [weak self] msg in
+        jobID = TTSWorker.shared.speak(words: words.map { $0.text }, pauses: words.map { $0.pause }, voice: Settings.shared.voice, outDir: outDir) { [weak self] msg in
             self?.handle(msg)
         }
     }

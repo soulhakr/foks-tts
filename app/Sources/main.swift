@@ -253,7 +253,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 } else {
                     let cg = appKitToCG(rect)
                     let t0 = Date()
-                    let words = await Task.detached { AXText.words(pid: pid, windowID: id, rectCG: cg) }.value
+                    let (rc, st) = (Settings.shared.readControls, Settings.shared.structurePauses)
+                    let words = await Task.detached { AXText.words(pid: pid, windowID: id, rectCG: cg, readControls: rc, structure: st) }.value
                     Log.write("AX result: \(words.map { "\($0.count) words" } ?? "nil") in \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
                     if let w = words, w.count >= 3 {
                         let screen = NSScreen.screens.first { $0.frame.intersects(rect) } ?? NSScreen.main ?? NSScreen.screens[0]
@@ -269,7 +270,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let top = mode == .screen ? Double(max(NSStatusBar.system.thickness, r.screen.safeAreaInsets.top)) / Double(r.rect.height) : 0
                 let img = r.image
                 let t0 = Date()
-                let words = try await Task.detached { try ocrWords(img, ignoreTopFraction: top) }.value
+                let st = Settings.shared.structurePauses
+                let words = try await Task.detached { try ocrWords(img, ignoreTopFraction: top, structure: st) }.value
                 Log.write("OCR: \(words.count) words in \(Int(Date().timeIntervalSince(t0) * 1000)) ms, image \(img.width)x\(img.height), rect \(r.rect)")
                 if words.isEmpty { Toast.show("No text found"); return }
                 start(words: words, rect: r.rect, screen: r.screen, image: nil)
@@ -287,7 +289,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Toast.show("No image on the clipboard"); return
         }
         Task { @MainActor in
-            let words = (try? await Task.detached { try ocrWords(cg) }.value) ?? []
+            let st = Settings.shared.structurePauses
+            let words = (try? await Task.detached { try ocrWords(cg, structure: st) }.value) ?? []
             if words.isEmpty { Toast.show("No text found"); return }
             start(words: words, rect: .zero, screen: NSScreen.main ?? NSScreen.screens[0], image: img)
         }
@@ -323,8 +326,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Text handed over by the Services menu (no on-screen geometry, so no highlight; controls only).
     func readText(_ text: String) {
         stopReading()
-        let words = text.split(whereSeparator: { $0.isWhitespace }).map { Word(text: String($0), x: 0, y: 0, w: 0, h: 0) }
-        Log.write("service: \(words.count) words")
+        // blank lines separate paragraphs: a short pause after each
+        var words: [Word] = []
+        let paragraphs = text.components(separatedBy: "\n\n").map { $0.split(whereSeparator: { $0.isWhitespace }) }.filter { !$0.isEmpty }
+        for (n, p) in paragraphs.enumerated() {
+            for (i, w) in p.enumerated() {
+                let last = i == p.count - 1 && n < paragraphs.count - 1
+                words.append(Word(text: String(w), x: 0, y: 0, w: 0, h: 0, pause: last && Settings.shared.structurePauses ? Structure.paragraph : 0))
+            }
+        }
+        Log.write("service: \(words.count) words in \(paragraphs.count) paragraphs")
         if words.isEmpty { return }
         startControlsOnly(words: words)
     }
@@ -373,6 +384,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let d = dir {
             try? FileManager.default.createDirectory(atPath: d, withIntermediateDirectories: true)
             s.collectOnly = { chunks in
+                // debug: each word's category, and the silence actually present in the audio after it
+                var start = [Int: Double](), end = [Int: Double](), base = 0.0
+                for c in chunks { for sp in c.spans { start[sp.i] = base + sp.start; end[sp.i] = base + sp.end }; base += c.dur }
+                var kinds: [String] = []
+                for (i, w) in words.enumerated() {
+                    if kinds.last != w.kind { kinds.append(w.kind) }
+                    if w.pause > 0, let e = end[i], let nx = start[i + 1] {
+                        FileHandle.standardError.write(Data(String(format: "STRUCT %-8@ %-6@ pause set %.2fs, audible gap %.2fs\n", w.text as NSString, w.kind as NSString, w.pause, nx - e).utf8))
+                    }
+                }
+                FileHandle.standardError.write(Data("STRUCT kinds in order: \(kinds), \(words.count) words, total audio \(String(format: "%.1f", base))s\n".utf8))
                 for (n, t) in times.enumerated() {
                     var base = 0.0, idx: Int?
                     for c in chunks {

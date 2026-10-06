@@ -2,7 +2,7 @@
 
 Protocol: newline-delimited JSON on stdin/stdout. stdout carries ONLY protocol messages
 (library prints are redirected to stderr).
-  in : {"cmd":"speak","id":N,"words":[...],"voice":"af_heart","out_dir":"/tmp/x"}
+  in : {"cmd":"speak","id":N,"words":[...],"pauses":[seconds of silence after each word, optional],"voice":"af_heart","out_dir":"/tmp/x"}
        {"cmd":"cancel","id":N}
   out: {"ready":true}
        {"id":N,"chunk":k,"wav":path,"dur":sec,"spans":[{"i":wordIndex,"start":s,"end":e}]}
@@ -44,7 +44,7 @@ def run(job):
     jid, voice = job["id"], job.get("voice", "af_heart")
     os.makedirs(job["out_dir"], exist_ok=True)
     try:
-        for k, (a, spans) in enumerate(core.chunk_stream(job["words"], voice, lambda: jid in cancelled)):
+        for k, (a, spans) in enumerate(core.chunk_stream(job["words"], voice, lambda: jid in cancelled, job.get("pauses"))):
             path = os.path.join(job["out_dir"], f"chunk_{k}.wav")
             wavfile.write(path, core.SR, (np.clip(a, -1, 1) * 32767).astype(np.int16))
             send({"id": jid, "chunk": k, "wav": path, "dur": len(a) / core.SR,

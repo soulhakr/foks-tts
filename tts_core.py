@@ -85,13 +85,15 @@ def clean(w):
     return re.sub(r"\s+", " ", t).strip()
 
 
-def make_chunks(idx, words, first_max=14, hard_max=40):
-    """Group word indexes into sentence-ish chunks; a short first chunk gets audio out fast."""
+def make_chunks(idx, words, pauses=None, first_max=14, hard_max=40):
+    """Group word indexes into sentence-ish chunks; a short first chunk gets audio out fast. A word followed by a
+    pause always ends its chunk, so the silence goes between sections (title / body / controls)."""
     out, cur = [], []
     for i in idx:
         cur.append(i)
         limit = first_max if not out else hard_max
-        if (re.search(r"[.!?:;]$", words[i]) and len(cur) >= 8) or len(cur) >= limit:
+        forced = pauses is not None and pauses[i] > 0
+        if forced or (re.search(r"[.!?:;]$", words[i]) and len(cur) >= 8) or len(cur) >= limit:
             out.append(cur)
             cur = []
     return out + ([cur] if cur else [])
@@ -124,8 +126,10 @@ def align(toks, idx, cleaned):
     return out
 
 
-def synth(idx, cleaned, voice):
+def synth(idx, cleaned, voice, close=False):
     text = " ".join(cleaned[i] for i in idx)
+    if close and not re.search(r"[.!?,;:]$", text):
+        text += "."          # a section that ends without punctuation (a title, a button label) still gets a falling ending
     try:
         audio, toks, off = [], [], 0.0
         for r in pipe_for(voice)(text, voice=voice_path(voice)):
@@ -146,18 +150,22 @@ def synth(idx, cleaned, voice):
             return np.zeros(0, dtype=np.float32), []
         h = len(idx) // 2
         a1, s1 = synth(idx[:h], cleaned, voice)
-        a2, s2 = synth(idx[h:], cleaned, voice)
+        a2, s2 = synth(idx[h:], cleaned, voice, close)
         shift = len(a1) / SR
         return np.concatenate([a1, a2]), s1 + [(i, s + shift, e + shift) for i, s, e in s2]
 
 
-def chunk_stream(words, voice, cancelled=lambda: False):
-    """Yield (audio float32 array, [(word_index, start, end)]) per chunk; spans are chunk-relative."""
+def chunk_stream(words, voice, cancelled=lambda: False, pauses=None):
+    """Yield (audio float32 array, [(word_index, start, end)]) per chunk; spans are chunk-relative.
+    `pauses[i]` is seconds of silence to add after word i (the chunk is padded with it)."""
     cleaned = [clean(w) for w in words]
     idx = [i for i, c in enumerate(cleaned) if c]
-    for ch in make_chunks(idx, words):
+    for ch in make_chunks(idx, words, pauses):
         if cancelled():
             return
-        a, spans = synth(ch, cleaned, voice)
+        pause = pauses[ch[-1]] if pauses else 0
+        a, spans = synth(ch, cleaned, voice, close=pause > 0)
         if len(a):
+            if pause > 0:
+                a = np.concatenate([a, np.zeros(int(pause * SR), dtype=a.dtype)])
             yield a, spans

@@ -83,12 +83,12 @@ final class TTSWorker {
     }
 
     @discardableResult
-    func speak(words: [String], voice: String, outDir: URL, handler: @escaping ([String: Any]) -> Void) -> Int {
+    func speak(words: [String], pauses: [Double], voice: String, outDir: URL, handler: @escaping ([String: Any]) -> Void) -> Int {
         start()
         let id = nextID
         nextID += 1
         handlers[id] = handler
-        send(["cmd": "speak", "id": id, "words": words, "voice": voice, "out_dir": outDir.path])
+        send(["cmd": "speak", "id": id, "words": words, "pauses": pauses, "voice": voice, "out_dir": outDir.path])
         return id
     }
 

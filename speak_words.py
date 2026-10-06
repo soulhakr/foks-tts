@@ -9,10 +9,12 @@ import tts_core as core
 
 
 def main():
-    words = [w["text"] for w in json.load(open(sys.argv[1]))["words"]]
+    items = json.load(open(sys.argv[1]))["words"]
+    words = [w["text"] for w in items]
+    pauses = [w.get("pause", 0) for w in items]
     voice = sys.argv[4] if len(sys.argv) > 4 else "af_heart"
     audio, timeline, off = [], [], 0.0
-    for a, spans in core.chunk_stream(words, voice):
+    for a, spans in core.chunk_stream(words, voice, pauses=pauses):
         timeline += [{"i": i, "start": s + off, "end": e + off} for i, s, e in spans]
         audio.append(a)
         off += len(a) / core.SR

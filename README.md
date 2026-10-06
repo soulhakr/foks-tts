@@ -21,6 +21,9 @@ anywhere.
   image on the clipboard.
 - **Highlights each word as it is spoken**, in place over the original text, using real per-word timing from the
   voice model.
+- **Reads in sections.** It tells titles, body text and buttons or other controls apart and pauses briefly between
+  them (with a clean, falling ending on each title or button label), instead of running everything together.
+  It can be turned off in Settings.
 - **Sounds natural.** It uses the [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) neural voice (28 English voices,
   American and British, male and female) running locally on Apple silicon through [MLX](https://github.com/ml-explore/mlx).
 - **Is fully offline.** After installation it makes no network connections: no cloud service, no account, no
@@ -71,7 +74,8 @@ app's menu: *App name > Services*). It needs no permissions. If it is not listed
 service reads with the floating controls but cannot highlight in place.
 
 **Settings** (from the menu bar icon): voice, speaking rate, where window text comes from (Accessibility, OCR or
-automatic), highlight color, whether to show the floating controls, and the status of permissions.
+automatic), highlight color, whether to show the floating controls, whether to pause between titles, body text and
+buttons, whether to read button and control labels in windows, and the status of permissions.
 
 ## How it works
 
@@ -87,6 +91,11 @@ automatic), highlight color, whether to show the floating controls, and the stat
         v
  playback with a highlight that follows the spoken word
 ```
+
+**Sections and pauses.** In a window, the accessibility tree says which text is a heading (web pages) or a button
+and other control (any app), and gaps between blocks mark paragraphs. For OCR the app estimates type size (box height
+and width per character) to spot titles, and treats a short line that stands apart as a button or label. A pause is
+added wherever the kind of text changes, and a little at paragraph breaks. Services text pauses at blank lines.
 
 Windows and selections are read from the target app's accessibility tree, which gives exact text and exact word
 rectangles; when an app exposes no text (some Electron and web apps do so only after a moment, and the app retries

@@ -15,6 +15,9 @@ enum AXText {
     }
 
     private static let textRoles: Set<String> = ["AXStaticText", "AXTextArea", "AXTextField", "AXComboBox"]
+    /// Clickable controls whose label is worth reading; the window's own close/minimize/zoom buttons are skipped.
+    private static let controlRoles: Set<String> = ["AXButton", "AXPopUpButton", "AXMenuButton", "AXCheckBox", "AXRadioButton"]
+    private static let windowButtonSubroles: Set<String> = ["AXCloseButton", "AXMinimizeButton", "AXZoomButton", "AXFullScreenButton"]
 
     private static func attr(_ el: AXUIElement, _ name: String) -> CFTypeRef? {
         var v: CFTypeRef?
@@ -103,7 +106,8 @@ enum AXText {
     }
 
     /// Words in reading order with window-normalized boxes (origin top-left), or nil if AX is unavailable.
-    static func words(pid: pid_t, windowID: CGWindowID, rectCG: CGRect, timeout: TimeInterval = 4) -> [Word]? {
+    static func words(pid: pid_t, windowID: CGWindowID, rectCG: CGRect, timeout: TimeInterval = 4,
+                      readControls: Bool = true, structure: Bool = true) -> [Word]? {
         guard trusted(prompt: false) else { Log.write("AX: not trusted"); return nil }
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, 0.6)
@@ -116,6 +120,7 @@ enum AXText {
 
         var deadline = Date().addingTimeInterval(timeout)
         var out: [Word] = []
+        var blocks: [Block] = []
         var visited = 0
 
         func norm(_ r: CGRect) -> Word? {
@@ -125,12 +130,22 @@ enum AXText {
                         w: Double(c.width / rectCG.width), h: Double(c.height / rectCG.height))
         }
 
-        func collect(_ el: AXUIElement, role: String) {
+        func addBlock(from first: Int, kind: Kind) {
+            guard out.count > first else { return }
+            let ws = out[first...]
+            let minX = ws.map { $0.x }.min()!, minY = ws.map { $0.y }.min()!
+            let maxX = ws.map { $0.x + $0.w }.max()!, maxY = ws.map { $0.y + $0.h }.max()!
+            blocks.append(Block(range: first..<out.count, kind: kind, rect: CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY),
+                                lineHeight: ws.map { $0.h }.sorted()[ws.count / 2]))
+        }
+
+        func collect(_ el: AXUIElement, role: String, kind: Kind) {
             let raw = string(el, kAXValueAttribute) ?? (role == "AXStaticText" ? string(el, kAXTitleAttribute) : nil)
             guard let text = raw, !text.isEmpty, let f = frame(el), f.intersects(rectCG) else { return }
             let ns = text as NSString
             let range = visibleRange(el) ?? NSRange(location: 0, length: ns.length)
             guard range.location + range.length <= ns.length else { return }
+            let first = out.count
             let re = try! NSRegularExpression(pattern: "\\S+")
             for m in re.matches(in: text, range: range) {
                 let wtxt = ns.substring(with: m.range)
@@ -141,29 +156,53 @@ enum AXText {
                 }()
                 if let b = norm(rect) { out.append(Word(text: wtxt, x: b.x, y: b.y, w: b.w, h: b.h)) }
             }
+            addBlock(from: first, kind: kind)
         }
 
-        func walk(_ el: AXUIElement, depth: Int) {
+        /// A button, checkbox, etc.: read its title (or description) as one UI-element block. Returns false if it has no label.
+        func collectControl(_ el: AXUIElement) -> Bool {
+            if let sub = string(el, kAXSubroleAttribute), windowButtonSubroles.contains(sub) { return true }   // skip, and do not descend
+            let label = [string(el, kAXTitleAttribute), string(el, kAXDescriptionAttribute)].compactMap { $0 }
+                .first { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            guard let text = label, let f = frame(el), f.intersects(rectCG) else { return false }
+            let parts = text.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+            guard !parts.isEmpty else { return false }
+            let first = out.count, total = parts.reduce(0) { $0 + $1.count }
+            var x = f.minX
+            for p in parts {
+                let w = f.width * CGFloat(p.count) / CGFloat(max(1, total))
+                if let b = norm(CGRect(x: x, y: f.minY, width: w, height: f.height)) { out.append(Word(text: p, x: b.x, y: b.y, w: b.w, h: b.h)) }
+                x += w
+            }
+            addBlock(from: first, kind: .ui)
+            return true
+        }
+
+        func walk(_ el: AXUIElement, depth: Int, kind: Kind) {
             if depth > 60 || visited > 8000 || Date() > deadline { return }
             visited += 1
             let role = string(el, kAXRoleAttribute) ?? ""
+            let kind: Kind = role == "AXHeading" ? .title : kind        // text inside a heading is a title
             if textRoles.contains(role) {
-                collect(el, role: role)
+                collect(el, role: role, kind: kind)
                 return
             }
-            for c in (attr(el, kAXChildrenAttribute) as? [AXUIElement]) ?? [] { walk(c, depth: depth + 1) }
+            if readControls, controlRoles.contains(role), collectControl(el) { return }
+            for c in (attr(el, kAXChildrenAttribute) as? [AXUIElement]) ?? [] { walk(c, depth: depth + 1, kind: kind) }
         }
-        walk(root, depth: 0)
+        walk(root, depth: 0, kind: .body)
         // Chromium/Electron build their accessibility tree a moment after being asked, so a first walk of a
         // web-based window often finds only a handful of elements. If it looks like that, wait and walk again.
         for delay in [0.7, 1.5] where out.count < 3 && visited < 40 {
             Log.write("AX: only \(visited) elements / \(out.count) words; retrying after \(delay)s")
             Thread.sleep(forTimeInterval: delay)
-            out = []; visited = 0
+            out = []; blocks = []; visited = 0
             deadline = Date().addingTimeInterval(timeout)
-            walk(root, depth: 0)
+            walk(root, depth: 0, kind: .body)
         }
-        Log.write("AX: visited \(visited) elements, \(out.count) words")
+        if structure { Structure.applyPauses(&out, blocks) }
+        let kinds = Dictionary(grouping: blocks, by: { $0.kind.rawValue }).mapValues { $0.count }
+        Log.write("AX: visited \(visited) elements, \(out.count) words in \(blocks.count) blocks \(kinds)")
         return out
     }
 }
