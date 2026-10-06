@@ -144,6 +144,11 @@ Notes on the voice engine: `mlx-audio` 0.4.4 has a rounding bug that made some i
 `tts_core.py` works around with a stand-in module. The brand rules (a rust fox on forest green or sand, never blue,
 purple or yellow-orange, so it is not mistaken for other fox logos) are in [`brand/BRAND.md`](brand/BRAND.md).
 
+## Roadmap
+
+Next up: an optional **bring-your-own vision model** for cleaner reading of busy screens, and a signed, notarized
+download later. See [ROADMAP.md](ROADMAP.md).
+
 ## License and credits
 
 FOKS TTS is released under the [MIT License](LICENSE). Third-party software, the model and its data are listed with
