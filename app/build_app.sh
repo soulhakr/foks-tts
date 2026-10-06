@@ -10,6 +10,7 @@ swiftc -swift-version 5 -O -o "$APP/Contents/MacOS/FOKS-TTS" Sources/*.swift
 cp Info.plist "$APP/Contents/Info.plist"
 cp tts_worker.py ../tts_core.py "$APP/Contents/Resources/"
 cp ../requirements/optional-gpl-pronunciation.lock "$APP/Contents/Resources/"
+cp ../LICENSE ../THIRD_PARTY_NOTICES.md "$APP/Contents/Resources/"
 cp Icon/AppIcon.icns Icon/MenuBarIcon.png "Icon/MenuBarIcon@2x.png" "$APP/Contents/Resources/"
 codesign --force --sign - --identifier local.soulhakr.foks-tts "$APP"
 echo "built $APP"
