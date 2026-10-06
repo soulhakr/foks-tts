@@ -73,6 +73,7 @@ final class TTSWorker {
             if obj["ready"] as? Bool == true {
                 isReady = true
                 hasEspeak = obj["espeak"] as? Bool ?? false
+                Log.write("worker ready, espeak=\(hasEspeak)")
                 onReadyChanged?()
             } else if let id = obj["id"] as? Int {
                 handlers[id]?(obj)

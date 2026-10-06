@@ -30,7 +30,7 @@ func screenUnderMouse() -> NSScreen {
 
 // MARK: - on-screen window list
 
-struct WinInfo { let id: CGWindowID; let pid: pid_t; let rect: NSRect; let title: String }
+struct WinInfo { let id: CGWindowID; let pid: pid_t; let rect: NSRect; let title: String; let owner: String }
 
 func visibleWindows() -> [WinInfo] {
     let opts: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
@@ -47,7 +47,7 @@ func visibleWindows() -> [WinInfo] {
         if r.width < 60 || r.height < 40 { continue }
         let owner = w[kCGWindowOwnerName as String] as? String ?? ""
         let name = w[kCGWindowName as String] as? String ?? ""
-        out.append(WinInfo(id: id, pid: pid, rect: cgToAppKit(r), title: name.isEmpty ? owner : "\(owner) — \(name)"))
+        out.append(WinInfo(id: id, pid: pid, rect: cgToAppKit(r), title: name.isEmpty ? owner : "\(owner) — \(name)", owner: owner))
     }
     return out    // front to back
 }
@@ -55,6 +55,10 @@ func visibleWindows() -> [WinInfo] {
 // MARK: - selection UI
 
 final class SelectWindow: NSWindow {
+    override init(contentRect: NSRect, styleMask style: NSWindow.StyleMask, backing: NSWindow.BackingStoreType, defer flag: Bool) {
+        super.init(contentRect: contentRect, styleMask: style, backing: backing, defer: flag)
+        acceptsMouseMovedEvents = true
+    }
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 }
@@ -72,7 +76,7 @@ final class SelectView: NSView {
         self.mode = mode
         self.screen = screen
         super.init(frame: NSRect(origin: .zero, size: screen.frame.size))
-        if mode == .window { windows = visibleWindows() }
+        if mode == .window { windows = visibleWindows(); Log.write("select: window picker on \(screen.localizedName), \(windows.count) candidate windows") }
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseMoved, .activeAlways, .inVisibleRect], owner: self))
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -88,24 +92,42 @@ final class SelectView: NSView {
         return NSRect(x: min(s.x, c.x), y: min(s.y, c.y), width: abs(s.x - c.x), height: abs(s.y - c.y))
     }
 
+    func windowUnderPointer() -> WinInfo? {
+        let g = NSEvent.mouseLocation
+        if let hit = windows.first(where: { NSMouseInRect(g, $0.rect, false) }) { return hit }
+        // Fallback: ask the window server which windows are under the pointer, below our overlay, front to back.
+        guard let mine = window else { return nil }
+        var below = mine.windowNumber
+        for _ in 0..<40 {
+            let n = NSWindow.windowNumber(at: g, belowWindowWithWindowNumber: below)
+            if n <= 0 { return nil }
+            if let w = windows.first(where: { $0.id == CGWindowID(n) }) { return w }
+            below = n
+        }
+        return nil
+    }
     override func mouseMoved(with e: NSEvent) {
         guard mode == .window else { return }
-        let g = NSEvent.mouseLocation
-        let h = windows.first { NSMouseInRect(g, $0.rect, false) }
+        let h = windowUnderPointer()
         if h?.id != hover?.id { hover = h; needsDisplay = true }
     }
     override func mouseDown(with e: NSEvent) {
+        Log.write("select: mouseDown mode=\(mode) hover=\(hover.map { "\($0.id)" } ?? "nil")")
         if mode == .area { start = convert(e.locationInWindow, from: nil); current = start; needsDisplay = true }
     }
     override func mouseDragged(with e: NSEvent) {
         if mode == .area { current = convert(e.locationInWindow, from: nil); needsDisplay = true }
     }
     override func mouseUp(with e: NSEvent) {
+        Log.write("select: mouseUp mode=\(mode)")
         if mode == .area {
             guard let r = dragRect, r.width > 12, r.height > 12 else { start = nil; current = nil; needsDisplay = true; return }
             onDone?(.rect(r.offsetBy(dx: screen.frame.minX, dy: screen.frame.minY), screen))
-        } else if mode == .window, let h = hover {
-            onDone?(.window(h.id, h.rect, h.pid))
+        } else if mode == .window {
+            let h = windowUnderPointer() ?? hover       // hit-test at click time; do not rely on cached hover state
+            Log.write("select: mouseUp window=\(h.map { "\($0.id) pid \($0.pid) \($0.owner)" } ?? "none under pointer"); pointer \(NSEvent.mouseLocation), view screen \(screen.localizedName) \(screen.frame)")
+            if h == nil { for w in windows { Log.write("  candidate \(w.id) \(w.owner) \(w.rect)") } }
+            if let h { onDone?(.window(h.id, h.rect, h.pid)) }
         }
     }
     override func rightMouseDown(with e: NSEvent) { onDone?(nil) }
@@ -116,7 +138,15 @@ final class SelectView: NSView {
         bounds.fill()
         let hole: NSRect? = mode == .area ? dragRect : hover.map { toLocal($0.rect) }
         if let r = hole {
-            NSGraphicsContext.current?.cgContext.clear(r)
+            // Not fully transparent: macOS lets mouse clicks pass straight through pixels with alpha 0, so a clear
+            // hole would send the click on the highlighted window to the app underneath instead of to this picker.
+            if let cg = NSGraphicsContext.current?.cgContext {
+                cg.saveGState()
+                cg.setBlendMode(.copy)
+                cg.setFillColor(CGColor(gray: 0, alpha: 0.02))
+                cg.fill(r)
+                cg.restoreGState()
+            }
             NSColor.systemBlue.setStroke()
             let p = NSBezierPath(rect: r)
             p.lineWidth = 2

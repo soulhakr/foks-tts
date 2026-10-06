@@ -61,7 +61,7 @@ enum AXText {
 
     /// Words in reading order with window-normalized boxes (origin top-left), or nil if AX is unavailable.
     static func words(pid: pid_t, windowID: CGWindowID, rectCG: CGRect, timeout: TimeInterval = 4) -> [Word]? {
-        guard trusted(prompt: false) else { return nil }
+        guard trusted(prompt: false) else { Log.write("AX: not trusted"); return nil }
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, 0.6)
         // Chromium/Electron/Firefox only build their accessibility tree when asked.
@@ -69,7 +69,7 @@ enum AXText {
         AXUIElementSetAttributeValue(app, "AXEnhancedUserInterface" as CFString, kCFBooleanTrue)
         var win = window(of: app, id: windowID, rectCG: rectCG)
         if win == nil { Thread.sleep(forTimeInterval: 0.4); win = window(of: app, id: windowID, rectCG: rectCG) }
-        guard let root = win else { return nil }
+        guard let root = win else { Log.write("AX: no AX window for pid \(pid) windowID \(windowID)"); return nil }
 
         let deadline = Date().addingTimeInterval(timeout)
         var out: [Word] = []
@@ -111,6 +111,7 @@ enum AXText {
             for c in (attr(el, kAXChildrenAttribute) as? [AXUIElement]) ?? [] { walk(c, depth: depth + 1) }
         }
         walk(root, depth: 0)
+        Log.write("AX: visited \(visited) elements, \(out.count) words")
         return out
     }
 }

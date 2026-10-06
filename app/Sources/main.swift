@@ -70,6 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         HotKeys.register(kVK_ANSI_P, id: 5) { [weak self] in self?.overlay?.session.pauseResume() }
         HotKeys.register(kVK_ANSI_Period, id: 6) { [weak self] in self?.stopReading() }
 
+        Log.write("---- launch: accessibility=\(AXText.trusted(prompt: false)) screenRecording=\(CGPreflightScreenCaptureAccess()) screens=\(NSScreen.screens.count)")
         runTestMode()
     }
 
@@ -211,8 +212,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func read(_ mode: CaptureMode) {
         stopReading()
+        Log.write("read(\(mode))")
         Capture.select(mode) { [weak self] sel in
-            guard let self, let sel else { return }
+            guard let self, let sel else { Log.write("selection cancelled"); return }
+            Log.write("selected: \(sel)")
             self.process(sel, mode: mode)
         }
     }
@@ -226,7 +229,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     if source == "accessibility" { Toast.show("Grant Accessibility access to read windows directly"); return }
                 } else {
                     let cg = appKitToCG(rect)
+                    let t0 = Date()
                     let words = await Task.detached { AXText.words(pid: pid, windowID: id, rectCG: cg) }.value
+                    Log.write("AX result: \(words.map { "\($0.count) words" } ?? "nil") in \(Int(Date().timeIntervalSince(t0) * 1000)) ms")
                     if let w = words, w.count >= 3 {
                         let screen = NSScreen.screens.first { $0.frame.intersects(rect) } ?? NSScreen.main ?? NSScreen.screens[0]
                         start(words: w, rect: rect, screen: screen, image: nil)
@@ -240,10 +245,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 let r = try await Capture.capture(sel)
                 let top = mode == .screen ? Double(max(NSStatusBar.system.thickness, r.screen.safeAreaInsets.top)) / Double(r.rect.height) : 0
                 let img = r.image
+                let t0 = Date()
                 let words = try await Task.detached { try ocrWords(img, ignoreTopFraction: top) }.value
+                Log.write("OCR: \(words.count) words in \(Int(Date().timeIntervalSince(t0) * 1000)) ms, image \(img.width)x\(img.height), rect \(r.rect)")
                 if words.isEmpty { Toast.show("No text found"); return }
                 start(words: words, rect: r.rect, screen: r.screen, image: nil)
             } catch {
+                Log.write("capture failed: \(error)")
                 alert("Capture failed", "\(error)")
             }
         }
@@ -263,10 +271,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func start(words: [Word], rect: NSRect, screen: NSScreen, image: NSImage?) {
+        Log.write("start reading: \(words.count) words, overlay rect \(rect), floating=\(image != nil), voice=\(Settings.shared.voice), rate=\(Settings.shared.rate)")
         let s = ReadingSession(words: words)
         let o = ReaderOverlay(session: s, rect: rect, screen: screen, image: image)
         o.onClose = { [weak self] in self?.overlay = nil }
-        s.onError = { [weak self] m in self?.alert("Could not read aloud", m) }
+        s.onError = { [weak self] m in Log.write("reading error: \(m)"); self?.alert("Could not read aloud", m) }
         overlay = o
         o.show()
         s.begin()
