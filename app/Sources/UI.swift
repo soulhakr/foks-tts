@@ -111,6 +111,7 @@ struct SettingsView: View {
                 LabeledContent("Read a window", value: "⌃⌥⌘W")
                 LabeledContent("Read a selected area", value: "⌃⌥⌘A")
                 LabeledContent("Read the whole screen", value: "⌃⌥⌘S")
+                LabeledContent("Read selected text", value: "⌃⌥⌘T")
                 LabeledContent("Read clipboard image", value: "⌃⌥⌘V")
                 LabeledContent("Pause / resume", value: "⌃⌥⌘P")
                 LabeledContent("Stop", value: "⌃⌥⌘.")

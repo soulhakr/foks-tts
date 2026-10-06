@@ -59,6 +59,49 @@ enum AXText {
         }
     }
 
+    /// The text currently selected in the focused UI element of the frontmost app (like macOS "Speak Selection").
+    /// `rectCG` is the union of the per-word rectangles (global CG coordinates) when the app reports them; the
+    /// returned words are then normalized to that rectangle. Without geometry the words have zero boxes.
+    static func selection() -> (words: [Word], rectCG: CGRect?)? {
+        guard trusted(prompt: false) else { Log.write("AX selection: not trusted"); return nil }
+        let sys = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(sys, 0.6)
+        guard let appRef = attr(sys, kAXFocusedApplicationAttribute) else { Log.write("AX selection: no focused app"); return nil }
+        let app = appRef as! AXUIElement
+        AXUIElementSetAttributeValue(app, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+        AXUIElementSetAttributeValue(app, "AXEnhancedUserInterface" as CFString, kCFBooleanTrue)
+        guard let elRef = attr(app, kAXFocusedUIElementAttribute) else { Log.write("AX selection: no focused element"); return nil }
+        let el = elRef as! AXUIElement
+        guard let text = string(el, kAXSelectedTextAttribute),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            Log.write("AX selection: focused element has no selected text (role \(string(el, kAXRoleAttribute) ?? "?"))"); return nil
+        }
+        var base = 0
+        if let v = attr(el, kAXSelectedTextRangeAttribute) {
+            var cf = CFRange()
+            if AXValueGetValue(v as! AXValue, .cfRange, &cf) { base = cf.location }
+        }
+        let ns = text as NSString
+        let re = try! NSRegularExpression(pattern: "\\S+")
+        var items: [(String, CGRect?)] = []
+        for m in re.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
+            items.append((ns.substring(with: m.range), boundsForRange(el, NSRange(location: base + m.range.location, length: m.range.length))))
+        }
+        guard !items.isEmpty else { return nil }
+        let rects = items.compactMap { $0.1 }
+        if rects.count == items.count, let first = rects.first {
+            let u = rects.dropFirst().reduce(first) { $0.union($1) }.insetBy(dx: -6, dy: -6)
+            let words = items.map { (t, r) -> Word in
+                let r = r!
+                return Word(text: t, x: Double((r.minX - u.minX) / u.width), y: Double((r.minY - u.minY) / u.height),
+                            w: Double(r.width / u.width), h: Double(r.height / u.height))
+            }
+            return (words, u)
+        }
+        Log.write("AX selection: \(items.count) words but no per-word geometry; reading without a highlight")
+        return (items.map { Word(text: $0.0, x: 0, y: 0, w: 0, h: 0) }, nil)
+    }
+
     /// Words in reading order with window-normalized boxes (origin top-left), or nil if AX is unavailable.
     static func words(pid: pid_t, windowID: CGWindowID, rectCG: CGRect, timeout: TimeInterval = 4) -> [Word]? {
         guard trusted(prompt: false) else { Log.write("AX: not trusted"); return nil }

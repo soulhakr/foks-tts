@@ -177,10 +177,13 @@ final class ReaderOverlay: NSObject, NSWindowDelegate {
     private(set) var window: NSWindow
     private var pill: NSPanel?
     var onClose: (() -> Void)?
+    private let controlsOnly: Bool
 
     /// `rect` is where to put the overlay (AppKit coordinates). With `image`, a floating viewer is shown instead.
-    init(session: ReadingSession, rect: NSRect, screen: NSScreen, image: NSImage?) {
+    /// `controlsOnly` shows just the floating transport controls (used for text that has no on-screen geometry).
+    init(session: ReadingSession, rect: NSRect, screen: NSScreen, image: NSImage?, controlsOnly: Bool = false) {
         self.session = session
+        self.controlsOnly = controlsOnly
         view.words = session.words
         view.color = Settings.shared.highlightColor
         view.image = image
@@ -213,6 +216,7 @@ final class ReaderOverlay: NSObject, NSWindowDelegate {
     }
 
     func show() {
+        if controlsOnly { showPill(); return }
         if view.image != nil {
             NSApp.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)
@@ -236,7 +240,7 @@ final class ReaderOverlay: NSObject, NSWindowDelegate {
         p.isMovableByWindowBackground = true
         p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         p.contentView = host
-        let screen = window.screen ?? NSScreen.main ?? NSScreen.screens[0]
+        let screen = controlsOnly ? screenUnderMouse() : (window.screen ?? NSScreen.main ?? NSScreen.screens[0])
         let vis = screen.visibleFrame
         p.setFrameOrigin(NSPoint(x: vis.midX - size.width / 2, y: vis.maxY - size.height - 14))
         p.orderFrontRegardless()

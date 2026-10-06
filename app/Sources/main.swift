@@ -28,6 +28,22 @@ enum HotKeys {
     }
 }
 
+// MARK: - Services menu provider ("Read Aloud with FOKS TTS")
+
+/// Receives the selected text from any app that offers the Services menu. Needs no permission: the sending app
+/// hands us the text on the pasteboard.
+final class ServiceProvider: NSObject {
+    var onText: ((String) -> Void)?
+
+    @objc func readAloud(_ pboard: NSPasteboard, userData: String, error: AutoreleasingUnsafeMutablePointer<NSString>) {
+        guard let text = pboard.string(forType: .string), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            error.pointee = "There is no text to read." as NSString
+            return
+        }
+        DispatchQueue.main.async { [weak self] in self?.onText?(text) }
+    }
+}
+
 // MARK: - app
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -38,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var bag = Set<AnyCancellable>()
     var previewSession: ReadingSession?
     var askedAccessibility = false
+    let serviceProvider = ServiceProvider()
 
     func applicationDidFinishLaunching(_ n: Notification) {
         status = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -67,9 +84,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         HotKeys.register(kVK_ANSI_A, id: 2) { [weak self] in self?.read(.area) }
         HotKeys.register(kVK_ANSI_S, id: 3) { [weak self] in self?.read(.screen) }
         HotKeys.register(kVK_ANSI_V, id: 4) { [weak self] in self?.readClipboard() }
+        HotKeys.register(kVK_ANSI_T, id: 7) { [weak self] in self?.readSelection() }
         HotKeys.register(kVK_ANSI_P, id: 5) { [weak self] in self?.overlay?.session.pauseResume() }
         HotKeys.register(kVK_ANSI_Period, id: 6) { [weak self] in self?.stopReading() }
 
+        serviceProvider.onText = { [weak self] text in self?.readText(text) }
+        NSApp.servicesProvider = serviceProvider
+        NSUpdateDynamicServices()
         Log.write("---- launch: accessibility=\(AXText.trusted(prompt: false)) screenRecording=\(CGPreflightScreenCaptureAccess()) screens=\(NSScreen.screens.count)")
         runTestMode()
     }
@@ -90,6 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         _ = item("Read Window…", "w", #selector(menuWindow))
         _ = item("Read Selected Area…", "a", #selector(menuArea))
         _ = item("Read Entire Screen", "s", #selector(menuScreen))
+        _ = item("Read Selected Text", "t", #selector(menuSelection))
         _ = item("Read Clipboard Image", "v", #selector(menuClipboard))
         menu.addItem(.separator())
         let reading = overlay != nil
@@ -124,6 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func menuArea() { read(.area) }
     @objc func menuScreen() { read(.screen) }
     @objc func menuClipboard() { readClipboard() }
+    @objc func menuSelection() { readSelection() }
     @objc func menuPause() { overlay?.session.pauseResume() }
     @objc func menuStop() { stopReading() }
     @objc func pickVoice(_ i: NSMenuItem) { if let id = i.representedObject as? String { Settings.shared.voice = id } }
@@ -268,6 +291,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if words.isEmpty { Toast.show("No text found"); return }
             start(words: words, rect: .zero, screen: NSScreen.main ?? NSScreen.screens[0], image: img)
         }
+    }
+
+    /// Read the text selected in the frontmost app via Accessibility (like Speak Selection), highlighting in place
+    /// when the app reports where the words are.
+    func readSelection() {
+        stopReading()
+        Log.write("readSelection()")
+        guard AXText.trusted(prompt: false) else {
+            Toast.show("Grant Accessibility access to read the selection")
+            if !askedAccessibility { askedAccessibility = true; _ = AXText.trusted(prompt: true) }
+            return
+        }
+        Task { @MainActor in
+            let result = await Task.detached { AXText.selection() }.value
+            guard let r = result else {
+                Toast.show("No selected text found. Try the Services menu: Read Aloud with FOKS TTS")
+                return
+            }
+            Log.write("selection: \(r.words.count) words, geometry=\(r.rectCG != nil)")
+            if let cg = r.rectCG {
+                let rect = cgToAppKit(cg)
+                let screen = NSScreen.screens.first { $0.frame.intersects(rect) } ?? screenUnderMouse()
+                start(words: r.words, rect: rect, screen: screen, image: nil)
+            } else {
+                startControlsOnly(words: r.words)
+            }
+        }
+    }
+
+    /// Text handed over by the Services menu (no on-screen geometry, so no highlight; controls only).
+    func readText(_ text: String) {
+        stopReading()
+        let words = text.split(whereSeparator: { $0.isWhitespace }).map { Word(text: String($0), x: 0, y: 0, w: 0, h: 0) }
+        Log.write("service: \(words.count) words")
+        if words.isEmpty { return }
+        startControlsOnly(words: words)
+    }
+
+    func startControlsOnly(words: [Word]) {
+        Log.write("start reading (controls only): \(words.count) words, voice=\(Settings.shared.voice), rate=\(Settings.shared.rate)")
+        let s = ReadingSession(words: words)
+        let o = ReaderOverlay(session: s, rect: .zero, screen: screenUnderMouse(), image: nil, controlsOnly: true)
+        o.onClose = { [weak self] in self?.overlay = nil }
+        s.onError = { [weak self] m in Log.write("reading error: \(m)"); self?.alert("Could not read aloud", m) }
+        overlay = o
+        o.show()
+        s.begin()
     }
 
     func start(words: [Word], rect: NSRect, screen: NSScreen, image: NSImage?) {

@@ -2,6 +2,14 @@
 
 *What does the FOKS say?* — **F**ully **O**ffline **K**okoro **S**peech (`foks-tts`).
 
+> Would you read it in a box?
+> Would you read it with a FOKS?
+>
+> *In a box, with a FOKS: yes! Drag a box around any text on your screen and FOKS TTS reads it back to you,
+> offline, in a natural voice, following along word by word.*
+>
+> (With apologies to Dr. Seuss.)
+
 Read text from a screenshot aloud with a natural-sounding voice, **entirely on-device**.
 OCR (local vision model or Apple Vision) feeds Kokoro-82M text-to-speech. No cloud, no
 accounts, no network at run time. Apple silicon only.
@@ -51,11 +59,20 @@ image, with a highlight that follows each spoken word, a floating speed control,
 | Hotkey | Action |
 |---|---|
 | ⌃⌥⌘W / A / S | Read a window / a selected area / the whole screen |
+| ⌃⌥⌘T | Read the text currently selected in any app (like macOS Speak Selection) |
 | ⌃⌥⌘V | Read the clipboard image (works with Shottr's copy-to-clipboard) |
 | ⌃⌥⌘P / ⌃⌥⌘. | Pause-resume / stop |
 
 - **Windows are read through the macOS Accessibility API** (the text VoiceOver sees, with exact word
   positions), falling back to OCR. Areas and the full screen use Apple Vision OCR.
+- **Selected text** (⌃⌥⌘T, or the menu's *Read Selected Text*) uses the Accessibility API like Speak Selection
+  does, and highlights in place when the app reports where the words are. Apps that do not expose their
+  selection can use the Services entry below.
+- **Services menu:** run `app/install_local.sh` (copies the app to `~/Applications` and refreshes the Services
+  cache), then in any app select text, right-click, and choose *Services > Read Aloud with FOKS TTS*. It needs no
+  permissions, because the app you are in hands over the text. If it does not show up, tick it once under System
+  Settings > Keyboard > Keyboard Shortcuts > Services > Text (macOS may not enable new services on its own); that
+  pane is also where you assign a keyboard shortcut. It shows the floating controls but no on-screen highlight.
 - A resident Python worker (`app/tts_worker.py`) keeps Kokoro loaded and streams audio chunk by chunk,
   so speech starts after the first sentence. Everything is offline.
 - Settings: voice (all English Kokoro voices on disk), speaking rate (0.5x to 2x, adjustable live),
