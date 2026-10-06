@@ -1,162 +1,158 @@
+<p align="center"><img src="docs/icon.png" width="128" alt="FOKS TTS icon: a fox with a speech bubble"></p>
+
 # FOKS TTS
 
-*What does the FOKS say?* — **F**ully **O**ffline **K**okoro **S**peech (`foks-tts`).
+**What does the FOKS say?** *F*ully *O*ffline *K*okoro *S*peech: a macOS menu bar app that reads text on your
+screen aloud in a natural voice, following along word by word. Everything runs on your Mac; nothing is sent
+anywhere.
 
 > Would you read it in a box?
 > Would you read it with a FOKS?
 >
-> *In a box, with a FOKS: yes! Drag a box around any text on your screen and FOKS TTS reads it back to you,
-> offline, in a natural voice, following along word by word.*
+> *In a box, with a FOKS: yes! Drag a box around any text on your screen and FOKS TTS reads it back to you.*
 >
 > (With apologies to Dr. Seuss.)
 
-Read text from a screenshot aloud with a natural-sounding voice, **entirely on-device**.
-OCR (local vision model or Apple Vision) feeds Kokoro-82M text-to-speech. No cloud, no
-accounts, no network at run time. Apple silicon only.
+<p align="center"><img src="docs/demo.gif" alt="A highlight following each word as it is spoken"></p>
 
-```
-image -> OCR (Gemma 3 via mlx-vlm | Apple Vision) -> text cleanup + chunking -> Kokoro (mlx-audio) -> WAV
-```
+## What it does
+
+- **Reads what you point at:** a window, a dragged area, the whole screen, the text you have selected, or an
+  image on the clipboard.
+- **Highlights each word as it is spoken**, in place over the original text, using real per-word timing from the
+  voice model.
+- **Sounds natural.** It uses the [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) neural voice (28 English voices,
+  American and British, male and female) running locally on Apple silicon through [MLX](https://github.com/ml-explore/mlx).
+- **Is fully offline.** After installation it makes no network connections: no cloud service, no account, no
+  telemetry. Speech, OCR and everything else happen on-device.
+- **Has a speech-controller bar** (pause, stop, and a live speed slider from 0.5x to 2x), like the macOS Speech
+  Controller, plus a Services-menu entry so you can start it from any app.
 
 ## Install
 
-Requirements: an Apple silicon Mac on macOS 14 or newer, the Command Line Tools (`xcode-select --install`),
-and [uv](https://docs.astral.sh/uv/) (the script installs it with Homebrew if you have Homebrew).
+Requirements: Apple silicon Mac, macOS 14 or newer, the Command Line Tools (`xcode-select --install`), and
+[uv](https://docs.astral.sh/uv/) (the installer will use Homebrew to get it if you have Homebrew).
 
 ```bash
-git clone <this repo> && cd foks-tts
+git clone https://github.com/soulhakr/foks-tts.git
+cd foks-tts
 ./install.sh
 ```
 
-It creates a uv-managed Python 3.13 environment from the hash-locked `requirements/core.lock`, downloads the
-Kokoro model at a pinned revision and verifies its SHA-256, speaks a test sentence offline, then builds
-`FOKS TTS.app` and installs it to `~/Applications` (including the Services-menu entry). Everything lives in
-`~/Library/Application Support/FOKS-TTS`. Options: `--no-app` (environment and model only), `--force`
-(rebuild). It is safe to re-run, and it leaves a symlinked developer setup alone. `./uninstall.sh` removes it
-(it asks before deleting the environment and model).
+The installer builds an isolated Python 3.13 environment from a hash-locked requirements file, downloads the Kokoro
+model at a pinned revision and verifies its SHA-256, speaks a test sentence offline, then builds **FOKS TTS.app**
+and installs it to `~/Applications`. Everything else lives in `~/Library/Application Support/FOKS-TTS`.
+It is safe to re-run. Options: `--no-app` (environment and model only), `--force` (rebuild). To remove it all:
+`./uninstall.sh`.
 
-After installing, open the app, grant Accessibility (and Screen Recording for area and full-screen
-reading) in its Settings, and try Control-Option-Command-T on some selected text.
+## First run
 
-## Files
+1. Open **FOKS TTS** from `~/Applications`. It lives in the menu bar (a fox head). On a Mac with a notch the
+   icon can be hidden when the bar is crowded; the hotkeys work regardless.
+2. In its **Settings**, grant **Accessibility** (to read windows and selections directly). For reading an area or
+   the whole screen, also grant **Screen Recording**. macOS may ask you to reopen the app after the second one.
+3. Select some text anywhere and press **⌃⌥⌘T**.
 
-| File | Purpose |
-|---|---|
-| `screen_to_speech.sh` | Pipeline: `./screen_to_speech.sh <image.png> [vlm\|vision]`, writes `<image>_speech.wav` (`PLAY=1` to play) |
-| `speak.py` | Kokoro driver: cleans symbols, chunks text, retries failed chunks by splitting. Reads text on stdin |
-| `vision_ocr.swift` | Apple Vision OCR, run uncompiled (`swift vision_ocr.swift img.png`) so no binary is installed |
-| `read_clipboard.sh` / `read_screen.swift` | Read the clipboard image aloud in a small window that **highlights the current word** (Esc quits, Space pauses) |
-| `tts_core.py` / `speak_words.py` | Kokoro helpers (cleanup, chunking, per-word timestamps, the SineGen fix) and the one-shot CLI used by `read_screen.swift` |
-| `app/` | The menubar app: Swift sources, `tts_worker.py`, `Info.plist`, `build_app.sh` |
-| `test_screenshot.png` | Synthetic test image |
+## Ways to read
 
-## Read-aloud with word highlight (Shottr workflow)
+| Shortcut | Reads | Text comes from |
+|---|---|---|
+| **⌃⌥⌘T** | the text you have selected | Accessibility API (like macOS Speak Selection) |
+| **⌃⌥⌘W** | a window you click | Accessibility API, falling back to OCR |
+| **⌃⌥⌘A** | an area you drag | OCR (Apple Vision) |
+| **⌃⌥⌘S** | the screen under the pointer | OCR (Apple Vision) |
+| **⌃⌥⌘V** | the image on the clipboard | OCR; pairs well with a screenshot tool that copies to the clipboard |
+| **Services menu** | selected text in any app | handed over by the app you are in |
+| **⌃⌥⌘P** / **⌃⌥⌘.** | pause or resume / stop | |
 
-1. Capture an area with Shottr (it is set to copy to the clipboard after capture).
-2. Run `./read_clipboard.sh` (bind it to a hotkey with a Shortcut: *Run Shell Script* action,
-   then add a keyboard shortcut in the shortcut's details).
-3. OCR runs with Apple Vision (word-level boxes), Kokoro speaks, and the window highlights each
-   word as it is spoken. Timing comes from Kokoro's own per-token timestamps.
+**Services menu:** in any app, select text, right-click, then *Services > Read Aloud with FOKS TTS* (or use the
+app's menu: *App name > Services*). It needs no permissions. If it is not listed, tick it once under
+*System Settings > Keyboard > Keyboard Shortcuts > Services > Text*, where you can also assign a shortcut. The
+service reads with the floating controls but cannot highlight in place.
 
-Startup is about 10 s (uncompiled Swift plus model load); a 5 s passage takes about 15 s total.
-Test without audio: `swift read_screen.swift --image test_screenshot.png --snapshots /tmp/frames --at 0.5,2,4`.
+**Settings** (from the menu bar icon): voice, speaking rate, where window text comes from (Accessibility, OCR or
+automatic), highlight color, whether to show the floating controls, and the status of permissions.
 
-## Menubar app (FOKS TTS.app)
+## How it works
 
-A native menubar app: read a **window**, a **selected area**, the **whole screen**, or the clipboard
-image, with a highlight that follows each spoken word, a floating speed control, and a voice picker.
-
-| Hotkey | Action |
-|---|---|
-| ⌃⌥⌘W / A / S | Read a window / a selected area / the whole screen |
-| ⌃⌥⌘T | Read the text currently selected in any app (like macOS Speak Selection) |
-| ⌃⌥⌘V | Read the clipboard image (works with Shottr's copy-to-clipboard) |
-| ⌃⌥⌘P / ⌃⌥⌘. | Pause-resume / stop |
-
-- **Windows are read through the macOS Accessibility API** (the text VoiceOver sees, with exact word
-  positions), falling back to OCR. Areas and the full screen use Apple Vision OCR.
-- **Selected text** (⌃⌥⌘T, or the menu's *Read Selected Text*) uses the Accessibility API like Speak Selection
-  does, and highlights in place when the app reports where the words are. Apps that do not expose their
-  selection can use the Services entry below.
-- **Services menu:** run `app/install_local.sh` (copies the app to `~/Applications` and refreshes the Services
-  cache), then in any app select text, right-click, and choose *Services > Read Aloud with FOKS TTS*. It needs no
-  permissions, because the app you are in hands over the text. If it does not show up, tick it once under System
-  Settings > Keyboard > Keyboard Shortcuts > Services > Text (macOS may not enable new services on its own); that
-  pane is also where you assign a keyboard shortcut. It shows the floating controls but no on-screen highlight.
-- A resident Python worker (`app/tts_worker.py`) keeps Kokoro loaded and streams audio chunk by chunk,
-  so speech starts after the first sentence. Everything is offline.
-- Settings: voice (all English Kokoro voices on disk), speaking rate (0.5x to 2x, adjustable live),
-  window text source, highlight color, floating controls.
-- Build: `app/build_app.sh` (uses full Xcode's toolchain; needs the Xcode.app SwiftUI macro plugin).
-  Output `app/build/FOKS TTS.app`, ad-hoc signed.
-- Permissions (System Settings > Privacy & Security): **Accessibility** to read windows directly,
-  **Screen Recording** for area/screen OCR. Because the signature is ad-hoc, rebuilding changes the
-  app's identity and macOS will ask again.
-- Headless test: `FOKS-TTS --read-image test_screenshot.png --snapshots /tmp/f --at 0.5,2,4`
-  writes frames showing which word is highlighted at those times.
-
-## Optional GPL pronunciation add-on
-
-Kokoro skips words that are missing from its dictionary (names, product names, jargon). An optional
-add-on teaches it to sound them out using eSpeak NG. Those packages are **GPL-licensed**, so they are
-**not part of the default install** and are never bundled:
-
-- Default install: `requirements/core.lock` (69 packages, no GPL code, about 460 MB).
-- Add-on: `requirements/optional-gpl-pronunciation.lock` (`phonemizer-fork` GPL-3.0+, `espeakng-loader`
-  which bundles eSpeak NG GPL-3.0, plus 20 small helper packages). Install and remove it from
-  *Settings > Extended pronunciation* in the app, which shows the license notice and asks first. Or:
-  `uv pip install --python <venv>/bin/python --require-hashes --no-deps -r requirements/optional-gpl-pronunciation.lock`
-- `tts_core.py` registers a stand-in for `misaki.espeak` when the add-on is absent (mlx-audio 0.4.4
-  otherwise refuses to start without it), and aligns word timing correctly around skipped words.
-- Verified in a fresh venv built from the hash-locked files: core only runs (`espeak = False`), the add-on
-  installs and enables `espeak = True`, removal reverts it, and a corrupted hash is rejected.
-
-## Brand
-
-Colors, themes, contrast checks and guardrails are in [`brand/BRAND.md`](brand/BRAND.md); the single source of
-truth is `brand/palette.json` (rust on forest green for dark, rust on sand for light), and the icon generator reads it.
-
-## Icon
-
-A friendly red fox with a speech bubble, drawn procedurally by `app/Icon/make_icon.swift`
-(`swift make_icon.swift`, then `iconutil -c icns` as in the script header). Two palettes are included
-(`rust-forest` is the default, `rust-sand` is the light variant); change
-`chosenPalette` to switch. The fox is a deeper rust/copper than Firefox's yellow-orange and sits on green,
-charcoal or cream, never blue or purple, so the app is not mistaken for Firefox/Mozilla or GitLab.
-
-## Running offline
-
-Scripts set `HF_HUB_OFFLINE=1`. To prove nothing touches the network:
-
-```bash
-sandbox-exec -p '(version 1)(allow default)(deny network*)' ./screen_to_speech.sh test_screenshot.png vision
+```
+ pick a window / area / screen / selection
+        |
+        v
+ text + word positions:  Accessibility API   or   Apple Vision OCR
+        |
+        v
+ Kokoro voice (resident Python worker, MLX)  -->  audio chunks + per-word timestamps
+        |
+        v
+ playback with a highlight that follows the spoken word
 ```
 
-## Known issues
+Windows and selections are read from the target app's accessibility tree, which gives exact text and exact word
+rectangles; when an app exposes no text (some Electron and web apps do so only after a moment, and the app retries
+before giving up) it falls back to OCR. A resident Python process keeps the voice model loaded and streams the audio
+sentence by sentence, so speech starts quickly.
 
-- `mlx-audio` 0.4.4's Kokoro raised an input-dependent `[broadcast_shapes]` error (a float rounding
-  bug in `SineGen._f02sine` when the audio length is a multiple of 300 samples). `tts_core.py` patches
-  it at import by trimming the sine wave to the pitch-curve length; chunk-splitting remains as a fallback. Voices are loaded from a local
-  path because the library otherwise defaults to fetching from a different repo.
-- Gemma 3 is inconsistent on cluttered full screens; use a cropped region. Apple Vision is
-  exhaustive but noisy on UI.
-- `misaki` declares `Python <3.13`; it works on 3.13 but is outside upstream support.
-- Interpreted Swift recompiles on every run (about 9 to 36 s).
+## Privacy and permissions
 
-## Privacy
+- **Nothing leaves your Mac.** Network is used only during installation (PyPI, GitHub, Hugging Face); at run time the
+  app and its voice engine run offline.
+- **Accessibility** lets the app read text from other apps' windows and selections. **Screen Recording** lets it
+  capture an area or the screen for OCR. Reading the clipboard image and using the Services menu need neither.
+- **Logs** are written to `~/Library/Logs/FOKS-TTS/foks.log` and contain events, counts and timings only, never the
+  text from your screen.
 
-Never commit screenshots of a live desktop. `.gitignore` excludes `real_*`, all PNGs except
-`test_screenshot.png`, and generated audio.
+## Optional pronunciation add-on (GPL)
 
-## License
+Kokoro skips words that are missing from its dictionary, such as names, product names and jargon. An optional add-on
+teaches it to sound them out using eSpeak NG. Those packages are **GPL-licensed**, so they are **not part of the
+default install**: install or remove them from *Settings > Extended pronunciation*, which shows the license notice and
+asks first.
 
-FOKS TTS is released under the [MIT License](LICENSE). It uses third-party packages, a model and data under
-their own licenses; they are listed with full texts in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-(generated by `tools/gen_notices.py`). Two things to know:
+## Troubleshooting
 
-- **GPL code is never bundled.** The optional pronunciation add-on (`phonemizer-fork`, GPL-3.0-or-later, and
-  eSpeak NG via `espeakng-loader`, GPL-3.0) is a separate download you can choose to install from Settings.
-- **Gemma is not included.** The experimental `screen_to_speech.sh` can use a local Gemma 3 copy you already
-  have; Gemma's own terms (Google's Gemma Terms of Use) apply to it.
-- The Kokoro model's training data includes two datasets that require attribution (Koniwa, SIWIS); the credits
-  are in the notices file.
+| Problem | What to try |
+|---|---|
+| No icon in the menu bar | It may be hidden by the notch or a menu bar manager; use the hotkeys, or ⌘-drag the icon into view. |
+| Nothing is spoken | Check `~/Library/Logs/FOKS-TTS/foks.log` for `worker ready`. The first launch takes about 10 s to load the voice. |
+| "Not trusted" or permissions keep resetting | If you rebuild from source the app is ad-hoc signed, so macOS treats each build as a new app: grant the permissions again (remove the old entry with the minus button first). |
+| A window reads via OCR instead of Accessibility | Some web and Electron windows expose little text; OCR needs the Screen Recording permission. |
+| Services entry missing | Tick it under *System Settings > Keyboard > Keyboard Shortcuts > Services > Text*. |
+
+## For developers
+
+| Path | What it is |
+|---|---|
+| `app/Sources/` | the Swift menu bar app: hotkeys, picker overlays, capture, Accessibility and OCR, the reading session and overlay, settings UI |
+| `app/tts_worker.py`, `tts_core.py` | the resident Kokoro worker: text cleanup, chunking, per-word timing, and fixes for upstream issues |
+| `app/build_app.sh`, `app/install_local.sh` | build and ad-hoc sign `FOKS TTS.app`; install it to `~/Applications` and register the Services entry |
+| `install.sh`, `uninstall.sh` | the installer and its inverse |
+| `requirements/` | `core.lock` (69 hash-locked packages, no GPL) and the optional GPL add-on lock |
+| `brand/`, `app/Icon/` | the color palette (`palette.json`, the single source of truth) and the procedurally drawn icon |
+| `tools/gen_notices.py` | regenerates `THIRD_PARTY_NOTICES.md` from the installed packages |
+| `read_clipboard.sh`, `read_screen.swift`, `speak_words.py`, `screen_to_speech.sh` | the original command-line prototypes the app grew from |
+
+```bash
+cd app && ./build_app.sh                        # build "build/FOKS TTS.app"
+build/"FOKS TTS.app"/Contents/MacOS/FOKS-TTS \  # headless check: render which word is highlighted when
+  --read-image ../test_screenshot.png --snapshots /tmp/frames --at 0.5,2,4
+python3 brand/build_palette.py                  # rebuild the palette and contrast table
+```
+
+Notes on the voice engine: `mlx-audio` 0.4.4 has a rounding bug that made some inputs fail
+(`[broadcast_shapes]`), which `tts_core.py` patches at import, and it refuses to start without eSpeak, which
+`tts_core.py` works around with a stand-in module. The brand rules (a rust fox on forest green or sand, never blue,
+purple or yellow-orange, so it is not mistaken for other fox logos) are in [`brand/BRAND.md`](brand/BRAND.md).
+
+## License and credits
+
+FOKS TTS is released under the [MIT License](LICENSE). Third-party software, the model and its data are listed with
+full license texts in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). GPL code is never bundled, and Gemma is not
+included.
+
+Built on the work of others: the [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) voice model and
+[misaki](https://github.com/hexgrad/misaki) by hexgrad, with architecture from
+[StyleTTS 2](https://github.com/yl4579/StyleTTS2); [MLX](https://github.com/ml-explore/mlx) by Apple;
+[mlx-audio](https://github.com/Blaizzy/mlx-audio) by Prince Canuma; [spaCy](https://spacy.io) by Explosion; and, for the
+optional add-on, [eSpeak NG](https://github.com/espeak-ng/espeak-ng). Kokoro's training data includes the Koniwa and
+SIWIS datasets, credited in the notices file.

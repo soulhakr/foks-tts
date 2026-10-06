@@ -9,6 +9,7 @@ real_*
 !app/Icon/MenuBarIcon.png
 !app/Icon/MenuBarIcon@2x.png
 !brand/swatches.png
+!docs/icon.png
 
 # Compiled Swift binary (the OCR step runs as an uncompiled script)
 vision_ocr
