@@ -155,7 +155,8 @@ final class HighlightView: NSView {
         }
         guard let c = current, c < words.count else { return }
         let w = words[c]
-        let hr = NSRect(x: r.minX + w.x * r.width - 3, y: r.minY + w.y * r.height - 2, width: w.w * r.width + 6, height: w.h * r.height + 4)
+        let hx = r.minX + CGFloat(w.x) * r.width - 3, hy = r.minY + CGFloat(w.y) * r.height - 2   // Word is Double, NSRect CGFloat
+        let hr = NSRect(x: hx, y: hy, width: CGFloat(w.w) * r.width + 6, height: CGFloat(w.h) * r.height + 4)
         let path = NSBezierPath(roundedRect: hr, xRadius: 4, yRadius: 4)
         color.withAlphaComponent(0.45).setFill()
         path.fill()
