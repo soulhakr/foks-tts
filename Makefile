@@ -7,8 +7,10 @@ FOKS_HOME ?= $(HOME)/Library/Application Support/FOKS-TTS
 PY        := $(FOKS_HOME)/venv/bin/python
 APP       := app/build/FOKS TTS.app
 DEV       := .venv-dev
+PLIST     := app/Info.plist
+SEMVER    := ^[0-9]+\.[0-9]+\.[0-9]+$$
 
-.PHONY: help typecheck test build install check notices audit release clean
+.PHONY: help typecheck test build install check notices audit bump release clean
 
 help:  ## list the tasks
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -43,15 +45,27 @@ audit:  ## print history matches for home paths, the OS username, personal email
 	@git log -p --all | grep -n -i -E "/Users/|$$(whoami)|@(gmail|icloud|outlook|hotmail)\." | sort | uniq -c || true
 	@git log --all --format='%an <%ae>' | sort -u
 
-release:  ## source release: make release VERSION=0.1 (checks, all tests incl. the built-app one, tarball + checksum in dist/, local tag; publishes nothing)
+bump:  ## set the version in app/Info.plist and add 1 to the build number: make bump VERSION=0.1.0 (then commit it)
+	@test -n "$(VERSION)" || { echo "usage: make bump VERSION=0.1.0"; exit 1; }
+	@echo "$(VERSION)" | grep -Eq '$(SEMVER)' || { echo "VERSION must be MAJOR.MINOR.PATCH, like 0.1.0"; exit 1; }
+	@build=$$(plutil -extract CFBundleVersion raw -o - $(PLIST)); \
+	  sed -E -i '' -e "s#(<key>CFBundleShortVersionString</key><string>)[^<]*(</string>)#\1$(VERSION)\2#" \
+	    -e "s#(<key>CFBundleVersion</key><string>)[^<]*(</string>)#\1$$((build + 1))\2#" $(PLIST)
+	@git diff -U0 $(PLIST) | grep -E '^[-+] '; echo "Commit it, push, then: make release VERSION=$(VERSION)"
+
+release:  ## source release: make release VERSION=0.1.0 (checks, all tests incl. the built-app one, tarball + checksum in dist/, local tag; publishes nothing)
 	@test -n "$(VERSION)" || { echo "usage: make release VERSION=0.1"; exit 1; }
-	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?$$' || { echo "VERSION must look like 0.1 or 0.1.2"; exit 1; }
+	@echo "$(VERSION)" | grep -Eq '$(SEMVER)' || { echo "VERSION must be MAJOR.MINOR.PATCH, like 0.1.0"; exit 1; }
 	@test "$$(git rev-parse --abbrev-ref HEAD)" = main || { echo "release from main"; exit 1; }
 	@test -z "$$(git status --porcelain)" || { echo "the working tree is not clean: commit or stash first"; exit 1; }
 	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" || { echo "HEAD differs from origin/main: push or pull first"; exit 1; }
 	@if git rev-parse -q --verify "refs/tags/v$(VERSION)" >/dev/null; then echo "tag v$(VERSION) already exists"; exit 1; fi
-	@plist=$$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' app/Info.plist); \
-	  test "$$plist" = "$(VERSION)" || { echo "app/Info.plist says $$plist: set CFBundleShortVersionString to $(VERSION) and commit"; exit 1; }
+	@plist=$$(plutil -extract CFBundleShortVersionString raw -o - $(PLIST)); \
+	  test "$$plist" = "$(VERSION)" || { echo "$(PLIST) says $$plist: run 'make bump VERSION=$(VERSION)', commit and push"; exit 1; }
+	@new=$$(plutil -extract CFBundleVersion raw -o - $(PLIST)); prev=$$(git tag --list 'v*' --sort=-v:refname | head -1); \
+	  echo "$$new" | grep -Eq '^[0-9]+$$' || { echo "CFBundleVersion must be a whole number, is '$$new'"; exit 1; }; \
+	  if [ -n "$$prev" ]; then old=$$(git show "$${prev}:$(PLIST)" | plutil -extract CFBundleVersion raw -o - -); \
+	    test "$$new" -gt "$$old" || { echo "build number $$new must be greater than $$old (in $$prev): run 'make bump'"; exit 1; }; fi
 	@bad=$$(git log --all --format=%ae | sort -u | grep -v '@users.noreply.github.com$$' || true); \
 	  test -z "$$bad" || { echo "history has author emails other than the GitHub noreply address: $$bad"; exit 1; }
 	@test -d "$(APP)" || { echo "no build found: run 'make build' first (a release runs the headless Structure test against it)"; exit 1; }
