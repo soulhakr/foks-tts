@@ -80,7 +80,7 @@ with the locations in effect and whether each is a default or an override (plus 
 
 ## Commands
 
-`make` lists the developer tasks (typecheck, test, build, install, check, notices, audit, clean); it is plain make with nothing
+`make` lists the developer tasks (typecheck, test, build, install, check, notices, audit, release, clean); it is plain make with nothing
 to install. The underlying commands:
 
 ```bash
@@ -89,6 +89,7 @@ cd app && ./build_app.sh                       # build "build/FOKS TTS.app" (ad-
 cd app && ./install_local.sh                   # copy to ~/Applications, enable and register the Services entry
 cd app && swiftc -swift-version 5 -typecheck Sources/*.swift     # fast compile check
 make test                                      # typecheck + pytest (29 tests; see below)
+make release VERSION=0.1                       # source release: checks, tests, dist/ tarball + sha256, LOCAL tag; publishes nothing
 # headless check of OCR, structure, audio and highlight (no permissions, works offline):
 sandbox-exec -p '(version 1)(allow default)(deny network*)' \
   "app/build/FOKS TTS.app/Contents/MacOS/FOKS-TTS" --read-image test_screenshot.png --snapshots /tmp/frames --at 0.5,2,4
