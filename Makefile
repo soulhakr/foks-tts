@@ -6,6 +6,7 @@ SHELL := /bin/zsh
 FOKS_HOME ?= $(HOME)/Library/Application Support/FOKS-TTS
 PY        := $(FOKS_HOME)/venv/bin/python
 APP       := app/build/FOKS TTS.app
+DEV       := .venv-dev
 
 .PHONY: help typecheck test build install check notices audit clean
 
@@ -15,8 +16,14 @@ help:  ## list the tasks
 typecheck:  ## fast Swift compile check (no build, no permission reset)
 	cd app && swiftc -swift-version 5 -typecheck Sources/*.swift
 
-test: typecheck  ## typecheck, then pytest (unit tests; the Structure test also needs a build)
-	uv run --no-project --python 3.13 --with 'pytest>=8' --with numpy==2.5.1 pytest -q
+# The test environment: hash-locked (requirements/dev.lock), project-local, rebuilt only when the lock changes.
+$(DEV)/.installed: requirements/dev.lock
+	UV_PYTHON_PREFERENCE=only-managed uv venv --clear --python 3.13 $(DEV)
+	uv pip install --python $(DEV)/bin/python --require-hashes --no-deps -r requirements/dev.lock
+	@touch $@
+
+test: typecheck $(DEV)/.installed  ## typecheck, then pytest in the hash-locked .venv-dev (Structure test also needs a build)
+	$(DEV)/bin/python -m pytest -q
 
 build:  ## build and ad-hoc sign "FOKS TTS.app" (macOS will ask for permissions again)
 	cd app && ./build_app.sh
@@ -36,5 +43,5 @@ audit:  ## print history matches for home paths, the OS username, personal email
 	@git log -p --all | grep -n -i -E "/Users/|$$(whoami)|@(gmail|icloud|outlook|hotmail)\." | sort | uniq -c || true
 	@git log --all --format='%an <%ae>' | sort -u
 
-clean:  ## remove the build output
-	rm -rf app/build
+clean:  ## remove the build output and the test environment
+	rm -rf app/build $(DEV)

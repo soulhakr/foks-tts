@@ -22,6 +22,7 @@ vision_ocr
 __pycache__/
 *.pyc
 .venv/
+.venv-dev/
 .DS_Store
 
 # Built app

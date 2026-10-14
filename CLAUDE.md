@@ -66,7 +66,7 @@ gotcha 1).
 | `app/Sources/Settings.swift`, `UI.swift`, `OptionalPackages.swift`, `Log.swift` | settings model (including the Python and model-folder overrides and their status checks), SwiftUI settings and floating controller, the optional GPL add-on installer, diagnostic log |
 | `app/Icon/make_icon.swift`, `brand/` | procedural icon and the palette (single source of truth: `brand/palette.json`) |
 | `install.sh`, `uninstall.sh`, `app/build_app.sh`, `app/install_local.sh` | installer, build, local install and Services registration |
-| `requirements/` | `core.lock` (69 hash-locked packages, no GPL) and the optional GPL add-on lock |
+| `requirements/` | `core.lock` (69 hash-locked packages, no GPL), the optional GPL add-on lock, and `dev.lock` (test tools, not shipped) |
 | `read_clipboard.sh`, `read_screen.swift`, `speak.py`, `speak_words.py`, `screen_to_speech.sh`, `vision_ocr.swift` | the original command-line prototypes the app grew from (kept; they use the FOKS venv; `screen_to_speech.sh`'s vision engine needs `OCR_MODEL` and `MLX_VLM_BIN` set, see below) |
 
 Runtime layout: `~/Library/Application Support/FOKS-TTS/{venv,models/kokoro}`. The app reads **no environment
@@ -95,8 +95,9 @@ sandbox-exec -p '(version 1)(allow default)(deny network*)' \
 # prints "STRUCT ..." lines (kind per word, pause set vs audible gap) and writes frame_N.png showing the highlight
 ```
 
-**Tests** (`tests/`, `pytest.ini`): `make test` runs pytest through `uv run --with pytest --with numpy` (an ephemeral
-environment; nothing is installed). The unit tests of `tts_core.py` (clean, chunking, alignment incl. skipped words, the
+**Tests** (`tests/`, `pytest.ini`): `make test` runs pytest in `.venv-dev`, a project-local environment built from the
+hash-locked `requirements/dev.lock` (source `requirements/dev.txt`; regenerate with the command in that file) and
+rebuilt only when the lock changes. Nothing is installed globally or in the runtime venv; `make clean` removes it. The unit tests of `tts_core.py` (clean, chunking, alignment incl. skipped words, the
 synth retry, pause padding, the SineGen patch, the eSpeak stand-in) replace MLX and mlx-audio with stubs in
 `tests/conftest.py`, so they need no model and run in about a second. `Structure` is Swift, so `tests/test_structure.py`
 drives the built app headlessly on `test_screenshot.png` and checks the title/body/control order and pauses; it is

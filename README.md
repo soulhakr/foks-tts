@@ -155,7 +155,7 @@ asks first.
 | `app/tts_worker.py`, `tts_core.py` | the resident Kokoro worker: text cleanup, chunking, per-word timing, and fixes for upstream issues |
 | `app/build_app.sh`, `app/install_local.sh` | build and ad-hoc sign `FOKS TTS.app`; install it to `~/Applications` and register the Services entry |
 | `install.sh`, `uninstall.sh` | the installer and its inverse |
-| `requirements/` | `core.lock` (69 hash-locked packages, no GPL) and the optional GPL add-on lock |
+| `requirements/` | `core.lock` (69 hash-locked packages, no GPL), the optional GPL add-on lock, and `dev.lock` (test tools, not shipped) |
 | `brand/`, `app/Icon/` | the color palette (`palette.json`, the single source of truth) and the procedurally drawn icon |
 | `tools/gen_notices.py` | regenerates `THIRD_PARTY_NOTICES.md` from the installed packages |
 | `read_clipboard.sh`, `read_screen.swift`, `speak_words.py`, `screen_to_speech.sh` | the original command-line prototypes the app grew from |

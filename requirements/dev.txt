@@ -1,0 +1,6 @@
+# Developer tools for `make test` (not shipped, not part of the app or the installer). Python 3.13, macOS arm64.
+# numpy matches requirements/core.txt so the unit tests exercise the same version the app uses.
+# Regenerate the lock after editing:
+#   uv pip compile requirements/dev.txt --generate-hashes --python-version 3.13 --python-platform aarch64-apple-darwin -o requirements/dev.lock
+pytest>=8
+numpy==2.5.1
