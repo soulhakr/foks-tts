@@ -79,6 +79,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         TTSWorker.shared.start()
         Settings.shared.$rate.sink { [weak self] r in self?.overlay?.session.setRate(r) }.store(in: &bag)
+        // Relaunch the voice engine after the Python or model location changes (debounced: the fields are typed into).
+        Settings.shared.$pythonOverride.combineLatest(Settings.shared.$modelDirOverride).dropFirst()
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .sink { _ in Log.write("engine location changed; restarting worker"); TTSWorker.shared.restart() }.store(in: &bag)
 
         HotKeys.register(kVK_ANSI_W, id: 1) { [weak self] in self?.read(.window) }
         HotKeys.register(kVK_ANSI_A, id: 2) { [weak self] in self?.read(.area) }
@@ -92,6 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.servicesProvider = serviceProvider
         NSUpdateDynamicServices()
         Log.write("---- launch: accessibility=\(AXText.trusted(prompt: false)) screenRecording=\(CGPreflightScreenCaptureAccess()) screens=\(NSScreen.screens.count)")
+        Log.write(Settings.locationSummary())
         runTestMode()
     }
 

@@ -27,6 +27,7 @@ final class TTSWorker {
         var env = ProcessInfo.processInfo.environment
         env["HF_HUB_OFFLINE"] = "1"
         env["PYTHONUNBUFFERED"] = "1"
+        env["FOKS_TTS_MODEL_DIR"] = Settings.modelDir.path
         p.environment = env
         let out = Pipe(), err = Pipe(), inp = Pipe()
         p.standardOutput = out; p.standardError = err; p.standardInput = inp

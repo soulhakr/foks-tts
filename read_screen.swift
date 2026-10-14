@@ -226,7 +226,10 @@ DispatchQueue.global().async {
     do { try JSONEncoder().encode(Payload(words: words)).write(to: wordsJSON) } catch { fail("\(error)") }
 
     let p = Process()
-    p.executableURL = home.appendingPathComponent("AI/mlx-env/bin/python")
+    let foksHome = ProcessInfo.processInfo.environment["FOKS_TTS_HOME"]
+        .map { URL(fileURLWithPath: $0) }
+        ?? home.appendingPathComponent("Library/Application Support/FOKS-TTS")
+    p.executableURL = foksHome.appendingPathComponent("venv/bin/python")
     p.arguments = [here.appendingPathComponent("speak_words.py").path, wordsJSON.path, wav.path, timeline.path]
     var env = ProcessInfo.processInfo.environment
     env["HF_HUB_OFFLINE"] = "1"

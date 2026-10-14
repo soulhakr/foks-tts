@@ -56,7 +56,7 @@ HAS_ESPEAK = _setup_espeak()
 
 REPO = "mlx-community/Kokoro-82M-bf16"
 FOKS_HOME = os.environ.get("FOKS_TTS_HOME") or os.path.expanduser("~/Library/Application Support/FOKS-TTS")
-MODEL_DIR = os.path.join(FOKS_HOME, "models", "kokoro")        # populated by install.sh
+MODEL_DIR = os.environ.get("FOKS_TTS_MODEL_DIR") or os.path.join(FOKS_HOME, "models", "kokoro")  # install.sh populates the default; the app can override
 VOICE_DIR = os.path.join(MODEL_DIR, "voices")
 SR = 24000
 _model = None

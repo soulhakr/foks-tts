@@ -71,6 +71,39 @@ final class StatusModel: ObservableObject {
     }
 }
 
+/// A text field for a file-system location, with Choose… and Reset buttons and a one-line status.
+struct PathRow: View {
+    let title: String
+    @Binding var value: String
+    let placeholder: String
+    let chooseFiles: Bool      // also allow picking a file (the Python interpreter), not just a folder
+    let status: (ok: Bool, text: String)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+            HStack {
+                TextField("", text: $value, prompt: Text(placeholder))
+                    .labelsHidden().textFieldStyle(.roundedBorder).autocorrectionDisabled()
+                Button("Choose…", action: choose)
+                Button("Reset") { value = "" }.disabled(value.isEmpty)
+            }
+            Text(status.text).font(.caption).foregroundStyle(status.ok ? Color.green : Color.orange)
+                .lineLimit(2).truncationMode(.middle)
+        }
+    }
+
+    private func choose() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = chooseFiles
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.prompt = "Choose"
+        if panel.runModal() == .OK, let u = panel.url { value = u.path }
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject var s = Settings.shared
     @ObservedObject var status = StatusModel.shared
@@ -132,6 +165,14 @@ struct SettingsView: View {
                 }
                 if let e = status.error { Text(e).font(.caption).foregroundStyle(.red) }
             }
+            Section("Engine locations (advanced)") {
+                Text("Leave these empty to use the folders FOKS TTS set up. Point them elsewhere to use an existing Python environment or Kokoro model folder. The voice engine restarts when you change them.")
+                    .font(.caption).foregroundStyle(.secondary)
+                PathRow(title: "Python environment", value: $s.pythonOverride, placeholder: Settings.defaultPythonPath,
+                        chooseFiles: true, status: Settings.pythonStatus(s.pythonOverride))
+                PathRow(title: "Kokoro model folder", value: $s.modelDirOverride, placeholder: Settings.defaultModelDir,
+                        chooseFiles: false, status: Settings.modelStatus(s.modelDirOverride))
+            }
             Section("Permissions & status") {
                 LabeledContent("Voice engine", value: status.ready ? "Ready (offline)" : "Loading…")
                 LabeledContent("Accessibility (read windows directly)") {
@@ -149,7 +190,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 820)
+        .frame(width: 520, height: 900)
         .onAppear { status.refresh() }
         .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in status.refresh() }
     }
