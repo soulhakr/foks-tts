@@ -43,7 +43,7 @@ audit:  ## print history matches for home paths, the OS username, personal email
 	@git log -p --all | grep -n -i -E "/Users/|$$(whoami)|@(gmail|icloud|outlook|hotmail)\." | sort | uniq -c || true
 	@git log --all --format='%an <%ae>' | sort -u
 
-release:  ## source release: make release VERSION=0.1 (checks, tests, tarball + checksum in dist/, local tag; publishes nothing)
+release:  ## source release: make release VERSION=0.1 (checks, all tests incl. the built-app one, tarball + checksum in dist/, local tag; publishes nothing)
 	@test -n "$(VERSION)" || { echo "usage: make release VERSION=0.1"; exit 1; }
 	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?$$' || { echo "VERSION must look like 0.1 or 0.1.2"; exit 1; }
 	@test "$$(git rev-parse --abbrev-ref HEAD)" = main || { echo "release from main"; exit 1; }
@@ -54,7 +54,10 @@ release:  ## source release: make release VERSION=0.1 (checks, tests, tarball + 
 	  test "$$plist" = "$(VERSION)" || { echo "app/Info.plist says $$plist: set CFBundleShortVersionString to $(VERSION) and commit"; exit 1; }
 	@bad=$$(git log --all --format=%ae | sort -u | grep -v '@users.noreply.github.com$$' || true); \
 	  test -z "$$bad" || { echo "history has author emails other than the GitHub noreply address: $$bad"; exit 1; }
-	$(MAKE) test
+	@test -d "$(APP)" || { echo "no build found: run 'make build' first (a release runs the headless Structure test against it)"; exit 1; }
+	@stale=$$(find app/Sources app/tts_worker.py tts_core.py app/Info.plist -type f -newer "$(APP)/Contents/MacOS/FOKS-TTS"); \
+	  test -z "$$stale" || { echo "the build is older than these files: run 'make build' again"; echo "$$stale"; exit 1; }
+	FOKS_REQUIRE_INTEGRATION=1 $(MAKE) test
 	$(MAKE) notices
 	@git diff --quiet THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md was out of date and has been regenerated: commit it and re-run"; exit 1; }
 	mkdir -p dist

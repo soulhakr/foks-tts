@@ -1,6 +1,6 @@
 """Structure (title / body / control detection and pauses) is Swift, so it is tested through the built app's headless
 mode: it OCRs test_screenshot.png, synthesizes the speech and prints one STRUCT line per pause. Needs `make build`,
-the FOKS venv and the Kokoro model; skipped otherwise."""
+the FOKS venv and the Kokoro model; skipped otherwise (a failure when FOKS_REQUIRE_INTEGRATION is set, as `make release` does)."""
 import os
 import re
 import shutil
@@ -13,11 +13,17 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP = os.path.join(ROOT, "app/build/FOKS TTS.app/Contents/MacOS/FOKS-TTS")
 IMAGE = os.path.join(ROOT, "test_screenshot.png")
 
-pytestmark = [
-    pytest.mark.integration,
-    pytest.mark.skipif(sys.platform != "darwin", reason="macOS only"),
-    pytest.mark.skipif(not os.path.exists(APP), reason="app not built: run `make build`"),
-]
+pytestmark = pytest.mark.integration
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _built_app():
+    """Skip when the app is not built. `make release` sets FOKS_REQUIRE_INTEGRATION=1 so a skip becomes a failure."""
+    reason = "macOS only" if sys.platform != "darwin" else None if os.path.exists(APP) else "app not built: run `make build`"
+    if reason:
+        if os.environ.get("FOKS_REQUIRE_INTEGRATION"):
+            pytest.fail(reason + " (required for a release)")
+        pytest.skip(reason)
 
 
 @pytest.fixture(scope="module")
