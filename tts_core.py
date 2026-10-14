@@ -1,6 +1,6 @@
 """Shared Kokoro helpers: text cleanup, chunking, token->word alignment, chunked synthesis.
 
-Used by speak_words.py (one-shot CLI) and app/tts_worker.py (resident worker for the menubar app).
+Used by app/tts_worker.py (the resident worker for the menubar app) and by the unit tests in tests/.
 Works around an input-dependent mlx-audio 0.4.4 'broadcast_shapes' failure by retrying a failed
 chunk in two halves.
 """

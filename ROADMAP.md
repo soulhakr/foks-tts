@@ -8,8 +8,8 @@ Planned work, roughly in priority order. Nothing here is committed to a date.
 supply, while FOKS TTS stays fully offline and ships no model of its own.
 
 **Why.** Apple Vision (the default) gives accurate text and exact word positions, but on a busy screen it returns every
-label, menu and button in an approximate order. An early prototype (`screen_to_speech.sh`) used Gemma 3 12B through
-`mlx-vlm` to transcribe only the main readable content in a sensible order. It worked, but was inconsistent on full
+label, menu and button in an approximate order. An early prototype (`screen_to_speech.sh`, with `vision_ocr.swift`) used
+Gemma 3 12B through `mlx-vlm` to transcribe only the main readable content in a sensible order. It worked, but was inconsistent on full
 cluttered screens (output length varied with small prompt changes), takes about 15 s per read on an M4 Pro, and gives no
 word positions.
 
@@ -29,6 +29,12 @@ permissively licensed ones (verify each model's license before use).
   Vision for geometry. Fall back to controls-only reading if alignment fails.
 - A fixed prompt, temperature 0, and a length-robust parser, since prompt sensitivity was the main problem in the
   prototype.
+
+**Prototype code.** The two prototype scripts were removed from `main` and are kept at the git tag `prototypes-v1`
+(the last commit that still had all the original command-line prototypes). To look at them:
+`git show prototypes-v1:screen_to_speech.sh` and `git show prototypes-v1:vision_ocr.swift`. The prototype needed a
+local `mlx-vlm` install (`MLX_VLM_BIN`) and a local vision model folder (`OCR_MODEL`); it is a reference for the
+prompt and the `mlx_vlm.generate` call, not code to restore as is.
 
 **Done when** a cluttered full-screen capture reads in a sensible order more reliably than Apple Vision alone, with a
 highlight, and the model path is entirely optional and offline.

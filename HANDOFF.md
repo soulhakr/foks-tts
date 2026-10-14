@@ -61,8 +61,8 @@ pgrep -fl FOKS-TTS; tail -5 ~/Library/Logs/FOKS-TTS/foks.log   # is the app runn
 - `~/Library/Application Support/FOKS-TTS/models/kokoro` is a **symlink** to `~/AI/kokoro` here. `install.sh` leaves
   symlinks alone and `uninstall.sh` removes the link only; never `rm -rf` through it. The Python `venv` is a real
   directory built from `requirements/core.lock`.
-- The legacy `screen_to_speech.sh` prototype needs the maintainer's `mlx-vlm` and a Gemma model (`MLX_VLM_BIN` and
-  `OCR_MODEL`, set per run). The app and installer do not use them.
+- The old command-line prototypes were removed from `main`; they are at the git tag `prototypes-v1` (see `ROADMAP.md`,
+  bring-your-own vision model). The app and installer do not use `mlx-vlm` or Gemma.
 
 ## Before the repository goes public
 

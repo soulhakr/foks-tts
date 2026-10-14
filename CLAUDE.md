@@ -67,7 +67,6 @@ gotcha 1).
 | `app/Icon/make_icon.swift`, `brand/` | procedural icon and the palette (single source of truth: `brand/palette.json`) |
 | `install.sh`, `uninstall.sh`, `app/build_app.sh`, `app/install_local.sh` | installer, build, local install and Services registration |
 | `requirements/` | `core.lock` (69 hash-locked packages, no GPL), the optional GPL add-on lock, and `dev.lock` (test tools, not shipped) |
-| `read_clipboard.sh`, `read_screen.swift`, `speak.py`, `speak_words.py`, `screen_to_speech.sh`, `vision_ocr.swift` | the original command-line prototypes the app grew from (kept; they use the FOKS venv; `screen_to_speech.sh`'s vision engine needs `OCR_MODEL` and `MLX_VLM_BIN` set, see below) |
 
 Runtime layout: `~/Library/Application Support/FOKS-TTS/{venv,models/kokoro}`. The app reads **no environment
 variables** (it is launched from Finder or launchd, which do not see the shell's). Instead, **Settings > Engine
@@ -75,7 +74,7 @@ locations** stores two optional overrides in UserDefaults (`pythonOverride`: an 
 `modelDirOverride`: a Kokoro model folder), empty meaning the defaults above. The app sets `FOKS_TTS_MODEL_DIR` itself
 when it starts the worker, restarts the worker (debounced 1 s) when either changes, and logs one line at each launch
 with the locations in effect and whether each is a default or an override (plus any `FOKS_TTS_*` variables it ignores).
-`FOKS_TTS_HOME` is read only by `install.sh`, `tts_core.py` and `read_screen.swift`. Python 3.13 (uv-managed), mlx
+`FOKS_TTS_HOME` is read only by `install.sh` and `tts_core.py`. Python 3.13 (uv-managed), mlx
 0.32.0, mlx-audio 0.4.4, misaki 0.9.4, spaCy 3.8.16.
 
 ## Commands
@@ -151,7 +150,7 @@ The demo GIF is made from headless snapshot frames of `test_screenshot.png` asse
     scrubbed from history).
 14. `UV_PYTHON_PREFERENCE=only-managed` keeps uv from borrowing Homebrew's or the system Python.
 15. **Config for the app goes through Settings, never the environment.** A Finder or launchd launch has no shell
-    variables. Environment variables are fine only for terminal tools (`install.sh`, the legacy scripts).
+    variables. Environment variables are fine only for terminal tools such as `install.sh`.
 16. **README screenshots are renders, not captures, and are static.** Regenerate them when Settings changes. Recipe
     (the harness is not in the repo): compile `app/Sources/*.swift` without `main.swift` plus a small `main.swift` that
     hosts `SettingsView` in an `NSHostingController`, sets `StatusModel` to ready/granted, applies

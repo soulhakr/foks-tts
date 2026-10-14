@@ -109,8 +109,8 @@ https://wordnet.princeton.edu/).
 - **uv** (Astral), used by the installer; MIT or Apache-2.0.
 - **Apple system frameworks** (AppKit, SwiftUI, Vision, ScreenCaptureKit, AVFoundation, ApplicationServices) and
   SF Symbols names, used through the macOS SDK on the user's own Mac.
-- **Gemma 3** is not part of FOKS TTS. The experimental `screen_to_speech.sh` script can use a copy the user
-  already has locally; Gemma is distributed under Google's Gemma Terms of Use, which this project does not grant.
+- **Gemma 3** is not part of FOKS TTS and is not bundled or required. A planned optional vision-model engine would
+  use a copy the user already has locally; Gemma is distributed under Google's Gemma Terms of Use, which this project does not grant.
 
 ## Optional GPL add-on (not distributed with FOKS TTS)
 
