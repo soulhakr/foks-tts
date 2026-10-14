@@ -158,6 +158,7 @@ asks first.
 | `requirements/` | `core.lock` (69 hash-locked packages, no GPL), the optional GPL add-on lock, and `dev.lock` (test tools, not shipped) |
 | `brand/`, `app/Icon/` | the color palette (`palette.json`, the single source of truth) and the procedurally drawn icon |
 | `tools/gen_notices.py` | regenerates `THIRD_PARTY_NOTICES.md` from the installed packages |
+| `tools/render_screenshots.sh` | re-renders the screenshots in `docs/` from the real views (`make screenshots`) |
 
 ```bash
 cd app && ./build_app.sh                        # build "build/FOKS TTS.app"

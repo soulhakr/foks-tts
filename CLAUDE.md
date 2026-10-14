@@ -79,7 +79,7 @@ with the locations in effect and whether each is a default or an override (plus 
 
 ## Commands
 
-`make` lists the developer tasks (typecheck, test, build, install, check, notices, audit, bump, release, clean); it is plain make with nothing
+`make` lists the developer tasks (typecheck, test, build, install, check, notices, screenshots, audit, bump, release, clean); it is plain make with nothing
 to install. The underlying commands:
 
 ```bash
@@ -151,15 +151,13 @@ The demo GIF is made from headless snapshot frames of `test_screenshot.png` asse
 14. `UV_PYTHON_PREFERENCE=only-managed` keeps uv from borrowing Homebrew's or the system Python.
 15. **Config for the app goes through Settings, never the environment.** A Finder or launchd launch has no shell
     variables. Environment variables are fine only for terminal tools such as `install.sh`.
-16. **README screenshots are renders, not captures, and are static.** Regenerate them when Settings changes. Recipe
-    (the harness is not in the repo): compile `app/Sources/*.swift` without `main.swift` plus a small `main.swift` that
-    hosts `SettingsView` in an `NSHostingController`, sets `StatusModel` to ready/granted, applies
-    `.environment(\.controlActiveState, .key)`, and writes `contentView.cacheDisplay` to a PNG (build a copy of
-    `UI.swift` with the frame height raised so the whole dialog fits; light and dark via `app.appearance`). Run it with
-    `CFFIXED_USER_HOME=/Users/Shared/demo` so no real username appears, over a demo home containing an executable
-    `venv/bin/python`, `models/kokoro/config.json` and 54 empty `voices/<name>.safetensors` files, then crop the empty
-    bottom with Pillow. Delete the demo home afterward. The menu bar image composites `MenuBarIcon@2x.png` on a light and
-    a dark strip.
+16. **README screenshots are renders, not captures, and are static.** Regenerate them with `make screenshots`
+    (`tools/render_screenshots.sh`) whenever Settings changes, then commit the three images in `docs/`. The harness
+    (`tools/screenshots/main.swift`) compiles the app sources without `main.swift`, hosts `SettingsView` in an
+    `NSHostingController` at 2x with fixed status values (`StatusModel.frozen`, `SettingsView.height`), crops the empty
+    bottom, and composites the menu bar icon on a light and a dark strip. The script runs it over a demo home
+    (`/Users/Shared/foks-demo`, deleted afterwards, with an executable `venv/bin/python`, `models/kokoro/config.json` and
+    one empty file per voice) via `CFFIXED_USER_HOME`, so no real username appears in the paths.
 17. **His interactive zsh aliases `ls` (ANSI colors) and `mkdir` (verbose).** `$(ls ...)` yields escape codes in
     names; use `find` or `command ls` in anything scripted.
 

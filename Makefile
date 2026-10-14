@@ -10,7 +10,7 @@ DEV       := .venv-dev
 PLIST     := app/Info.plist
 SEMVER    := ^[0-9]+\.[0-9]+\.[0-9]+$$
 
-.PHONY: help typecheck test build install check notices audit bump release clean
+.PHONY: help typecheck test build install check notices screenshots audit bump release clean
 
 help:  ## list the tasks
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -40,6 +40,9 @@ check:  ## headless offline check of OCR, structure, audio and highlight (uses t
 
 notices:  ## regenerate THIRD_PARTY_NOTICES.md from the installed packages
 	"$(PY)" tools/gen_notices.py
+
+screenshots:  ## re-render the README images in docs/ (Settings light and dark, menu bar icon)
+	tools/render_screenshots.sh
 
 audit:  ## print history matches for home paths, the OS username, personal email domains
 	@git log -p --all | grep -n -i -E "/Users/|$$(whoami)|@(gmail|icloud|outlook|hotmail)\." | sort | uniq -c || true

@@ -62,8 +62,11 @@ final class StatusModel: ObservableObject {
     @Published var espeak = TTSWorker.shared.hasEspeak
     @Published var busy = false
     @Published var error: String?
+    /// Set by tools/screenshots so the README renders can show fixed values (refresh would read the real ones).
+    var frozen = false
 
     func refresh() {
+        guard !frozen else { return }
         axOK = AXText.trusted(prompt: false)
         scOK = CGPreflightScreenCaptureAccess()
         ready = TTSWorker.shared.isReady
@@ -110,6 +113,7 @@ struct SettingsView: View {
     var onPreview: () -> Void
     var onInstallAddon: () -> Void
     var onRemoveAddon: () -> Void
+    var height: CGFloat = 900      // taller in tools/screenshots so the whole dialog fits in one render
 
     var body: some View {
         Form {
@@ -190,7 +194,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 520, height: 900)
+        .frame(width: 520, height: height)
         .onAppear { status.refresh() }
         .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in status.refresh() }
     }
