@@ -282,7 +282,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 start(words: words, rect: r.rect, screen: r.screen, image: nil)
             } catch {
                 Log.write("capture failed: \(error)")
-                alert("Capture failed", "\(error)")
+                alert("Could not read that area", "\(error.localizedDescription)\n\nDetails are in ~/Library/Logs/FOKS-TTS/foks.log.")
             }
         }
     }

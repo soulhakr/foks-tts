@@ -17,8 +17,24 @@ func ocrWords(_ cg: CGImage, ignoreTopFraction: Double = 0, structure: Bool = tr
     let req = VNRecognizeTextRequest()
     req.recognitionLevel = .accurate
     req.usesLanguageCorrection = true
-    try VNImageRequestHandler(cgImage: cg).perform([req])
-    let obs: [VNRecognizedTextObservation] = req.results ?? []
+    do {
+        try VNImageRequestHandler(cgImage: cg).perform([req])
+    } catch {
+        // The Neural Engine can be unavailable while another app is using it (a screen share, a video call) or
+        // under memory pressure, which surfaces as an "e5rt" error. The CPU path is slower but does not need it.
+        Log.write("OCR failed on the Neural Engine (\(error)); retrying on the CPU")
+        let cpu = VNRecognizeTextRequest()
+        cpu.recognitionLevel = .accurate
+        cpu.usesLanguageCorrection = true
+        cpu.usesCPUOnly = true
+        try VNImageRequestHandler(cgImage: cg).perform([cpu])
+        return try finish(cpu.results ?? [], ignoreTopFraction, structure)
+    }
+    return try finish(req.results ?? [], ignoreTopFraction, structure)
+}
+
+private func finish(_ results: [VNRecognizedTextObservation], _ ignoreTopFraction: Double, _ structure: Bool) throws -> [Word] {
+    let obs = results
     let byTop = obs.sorted { $0.boundingBox.midY > $1.boundingBox.midY }
     var rows: [[VNRecognizedTextObservation]] = []
     for o in byTop {
