@@ -6,12 +6,20 @@ project uses [Semantic Versioning](https://semver.org/) (see `HANDOFF.md`). Add 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-14
+
 ### Added
 - An **About** section in Settings showing the version and build number; the version is also logged at each launch.
 - `make screenshots`: the README images are re-rendered from the real views (`tools/render_screenshots.sh`).
-- This changelog, `SECURITY.md` (private vulnerability reporting and what counts as in scope) and `CONTRIBUTING.md`.
 - GitHub Actions CI (macOS 14 and 15: typecheck, unit tests, build) and tests that check the lock files stay
   hash-locked, in step with their source lists, and free of GPL packages and home paths in the default install.
+- This changelog, `SECURITY.md` (private vulnerability reporting and what counts as in scope) and `CONTRIBUTING.md`.
+
+### Changed
+- `HANDOFF.md` and `CLAUDE.md` no longer contain machine-specific details; they hold general testing notes instead.
+
+### Fixed
+- A `Double` and `CGFloat` mix in the highlight rectangle that older Swift compilers reject as ambiguous.
 
 ### Removed
 - The original command-line prototypes (`read_clipboard.sh`, `read_screen.swift`, `speak.py`, `speak_words.py`,
