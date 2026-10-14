@@ -27,4 +27,5 @@ __pycache__/
 
 # Built app
 app/build/
+dist/
 app/Icon/concepts_preview.png

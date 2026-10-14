@@ -8,7 +8,7 @@ PY        := $(FOKS_HOME)/venv/bin/python
 APP       := app/build/FOKS TTS.app
 DEV       := .venv-dev
 
-.PHONY: help typecheck test build install check notices audit clean
+.PHONY: help typecheck test build install check notices audit release clean
 
 help:  ## list the tasks
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -43,5 +43,26 @@ audit:  ## print history matches for home paths, the OS username, personal email
 	@git log -p --all | grep -n -i -E "/Users/|$$(whoami)|@(gmail|icloud|outlook|hotmail)\." | sort | uniq -c || true
 	@git log --all --format='%an <%ae>' | sort -u
 
-clean:  ## remove the build output and the test environment
-	rm -rf app/build $(DEV)
+release:  ## source release: make release VERSION=0.1 (checks, tests, tarball + checksum in dist/, local tag; publishes nothing)
+	@test -n "$(VERSION)" || { echo "usage: make release VERSION=0.1"; exit 1; }
+	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+(\.[0-9]+)?$$' || { echo "VERSION must look like 0.1 or 0.1.2"; exit 1; }
+	@test "$$(git rev-parse --abbrev-ref HEAD)" = main || { echo "release from main"; exit 1; }
+	@test -z "$$(git status --porcelain)" || { echo "the working tree is not clean: commit or stash first"; exit 1; }
+	@test "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" || { echo "HEAD differs from origin/main: push or pull first"; exit 1; }
+	@if git rev-parse -q --verify "refs/tags/v$(VERSION)" >/dev/null; then echo "tag v$(VERSION) already exists"; exit 1; fi
+	@plist=$$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' app/Info.plist); \
+	  test "$$plist" = "$(VERSION)" || { echo "app/Info.plist says $$plist: set CFBundleShortVersionString to $(VERSION) and commit"; exit 1; }
+	@bad=$$(git log --all --format=%ae | sort -u | grep -v '@users.noreply.github.com$$' || true); \
+	  test -z "$$bad" || { echo "history has author emails other than the GitHub noreply address: $$bad"; exit 1; }
+	$(MAKE) test
+	$(MAKE) notices
+	@git diff --quiet THIRD_PARTY_NOTICES.md || { echo "THIRD_PARTY_NOTICES.md was out of date and has been regenerated: commit it and re-run"; exit 1; }
+	mkdir -p dist
+	git archive --format=tar.gz --prefix=foks-tts-$(VERSION)/ -o dist/foks-tts-$(VERSION).tar.gz HEAD
+	cd dist && shasum -a 256 foks-tts-$(VERSION).tar.gz > foks-tts-$(VERSION).tar.gz.sha256
+	git tag -a v$(VERSION) -m "FOKS TTS $(VERSION)"
+	@echo; echo "Built dist/foks-tts-$(VERSION).tar.gz (+ .sha256) and created the local tag v$(VERSION). Nothing was published."
+	@echo "To publish: git push origin v$(VERSION), then create a release from the tag and attach the files in dist/."
+
+clean:  ## remove the build output, the test environment and dist/
+	rm -rf app/build $(DEV) dist
