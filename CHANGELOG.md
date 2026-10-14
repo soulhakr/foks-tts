@@ -9,7 +9,7 @@ project uses [Semantic Versioning](https://semver.org/) (see `HANDOFF.md`). Add 
 ### Added
 - An **About** section in Settings showing the version and build number; the version is also logged at each launch.
 - `make screenshots`: the README images are re-rendered from the real views (`tools/render_screenshots.sh`).
-- This changelog.
+- This changelog, `SECURITY.md` (private vulnerability reporting and what counts as in scope) and `CONTRIBUTING.md`.
 - GitHub Actions CI (macOS 14 and 15: typecheck, unit tests, build) and tests that check the lock files stay
   hash-locked, in step with their source lists, and free of GPL packages and home paths in the default install.
 

@@ -177,6 +177,11 @@ purple or yellow-orange, so it is not mistaken for other fox logos) are in [`bra
 Next up: an optional **bring-your-own vision model** for cleaner reading of busy screens, and a signed, notarized
 download later. See [ROADMAP.md](ROADMAP.md).
 
+## Contributing and security
+
+Bug reports and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). To report a security problem, use the
+private process in [SECURITY.md](SECURITY.md) rather than a public issue.
+
 ## License and credits
 
 FOKS TTS is released under the [MIT License](LICENSE). Third-party software, the model and its data are listed with
