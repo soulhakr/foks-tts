@@ -80,7 +80,7 @@ with the locations in effect and whether each is a default or an override (plus 
 
 ## Commands
 
-`make` lists the developer tasks (typecheck, build, install, check, notices, audit, clean); it is plain make with nothing
+`make` lists the developer tasks (typecheck, test, build, install, check, notices, audit, clean); it is plain make with nothing
 to install. The underlying commands:
 
 ```bash
@@ -88,11 +88,19 @@ to install. The underlying commands:
 cd app && ./build_app.sh                       # build "build/FOKS TTS.app" (ad-hoc signed, Command Line Tools only)
 cd app && ./install_local.sh                   # copy to ~/Applications, enable and register the Services entry
 cd app && swiftc -swift-version 5 -typecheck Sources/*.swift     # fast compile check
+make test                                      # typecheck + pytest (29 tests; see below)
 # headless check of OCR, structure, audio and highlight (no permissions, works offline):
 sandbox-exec -p '(version 1)(allow default)(deny network*)' \
   "app/build/FOKS TTS.app/Contents/MacOS/FOKS-TTS" --read-image test_screenshot.png --snapshots /tmp/frames --at 0.5,2,4
 # prints "STRUCT ..." lines (kind per word, pause set vs audible gap) and writes frame_N.png showing the highlight
 ```
+
+**Tests** (`tests/`, `pytest.ini`): `make test` runs pytest through `uv run --with pytest --with numpy` (an ephemeral
+environment; nothing is installed). The unit tests of `tts_core.py` (clean, chunking, alignment incl. skipped words, the
+synth retry, pause padding, the SineGen patch, the eSpeak stand-in) replace MLX and mlx-audio with stubs in
+`tests/conftest.py`, so they need no model and run in about a second. `Structure` is Swift, so `tests/test_structure.py`
+drives the built app headlessly on `test_screenshot.png` and checks the title/body/control order and pauses; it is
+skipped unless `make build` has been run and the FOKS venv and model are installed.
 
 Logs: `~/Library/Logs/FOKS-TTS/foks.log` (events, counts, timings; never screen text) and `$TMPDIR/foks-tts-worker.log`.
 Regenerate: icon (`cd app/Icon && swift make_icon.swift && iconutil -c icns AppIcon.iconset -o AppIcon.icns && rm -rf

@@ -7,13 +7,16 @@ FOKS_HOME ?= $(HOME)/Library/Application Support/FOKS-TTS
 PY        := $(FOKS_HOME)/venv/bin/python
 APP       := app/build/FOKS TTS.app
 
-.PHONY: help typecheck build install check notices audit clean
+.PHONY: help typecheck test build install check notices audit clean
 
 help:  ## list the tasks
 	@awk -F':.*## ' '/^[a-z-]+:.*## /{printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 typecheck:  ## fast Swift compile check (no build, no permission reset)
 	cd app && swiftc -swift-version 5 -typecheck Sources/*.swift
+
+test: typecheck  ## typecheck, then pytest (unit tests; the Structure test also needs a build)
+	uv run --no-project --python 3.13 --with 'pytest>=8' --with numpy==2.5.1 pytest -q
 
 build:  ## build and ad-hoc sign "FOKS TTS.app" (macOS will ask for permissions again)
 	cd app && ./build_app.sh
