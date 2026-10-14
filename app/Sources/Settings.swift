@@ -28,8 +28,19 @@ final class Settings: ObservableObject {
     /// ~/Library/Application Support/FOKS-TTS: `venv` (Python environment) and `models/kokoro` (model and voices).
     /// Both locations can be overridden in Settings (stored in `pythonOverride` / `modelDirOverride`).
     static let home = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/FOKS-TTS")
-    static let defaultPythonPath = home.appendingPathComponent("venv/bin/python").path
-    static let defaultModelDir = home.appendingPathComponent("models/kokoro").path
+    /// Where the Homebrew formula keeps the engine (the `opt` path is stable across upgrades). Used only when
+    /// nothing is installed under Application Support, so an install.sh setup always wins.
+    static let brewEngine = "/opt/homebrew/opt/foks-tts/libexec/engine"
+    static var defaultPythonPath: String {
+        let mine = home.appendingPathComponent("venv/bin/python").path, brew = brewEngine + "/venv/bin/python"
+        let fm = FileManager.default
+        return !fm.isExecutableFile(atPath: mine) && fm.isExecutableFile(atPath: brew) ? brew : mine
+    }
+    static var defaultModelDir: String {
+        let mine = home.appendingPathComponent("models/kokoro").path, brew = brewEngine + "/models/kokoro"
+        let fm = FileManager.default
+        return !fm.fileExists(atPath: mine + "/config.json") && fm.fileExists(atPath: brew + "/config.json") ? brew : mine
+    }
 
     /// Python interpreter used for the voice engine. The override may name the interpreter itself or a
     /// virtual-environment folder (then `bin/python` inside it is used).
@@ -71,8 +82,10 @@ final class Settings: ObservableObject {
     /// One line for the launch log: which Python and model folder are in effect and where each came from, plus a
     /// note if FOKS_TTS_* variables are present (the app ignores them; use the Settings fields instead).
     static func locationSummary() -> String {
-        func source(_ raw: String) -> String { expand(raw).isEmpty ? "default" : "Settings override" }
-        var line = "engine: python=\(pythonPath) [\(source(shared.pythonOverride))] model=\(modelDir.path) [\(source(shared.modelDirOverride))]"
+        func source(_ raw: String, _ resolved: String) -> String {
+            !expand(raw).isEmpty ? "Settings override" : resolved.hasPrefix(brewEngine) ? "Homebrew" : "default"
+        }
+        var line = "engine: python=\(pythonPath) [\(source(shared.pythonOverride, pythonPath))] model=\(modelDir.path) [\(source(shared.modelDirOverride, modelDir.path))]"
         let ignored = ProcessInfo.processInfo.environment.keys.filter { $0.hasPrefix("FOKS_TTS_") }.sorted()
         if !ignored.isEmpty { line += "; ignoring environment: \(ignored.joined(separator: ", "))" }
         return line

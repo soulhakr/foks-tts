@@ -55,6 +55,16 @@ cd foks-tts
 ./install.sh
 ```
 
+**With Homebrew** (from the author's tap; it builds from source, so it needs the Command Line Tools too):
+
+```bash
+brew install soulhakr/tap/foks-tts     # builds the voice environment and the app (downloads about 800 MB)
+foks-tts-setup                         # copies FOKS TTS.app into ~/Applications and registers the Services entry
+```
+
+After `brew upgrade foks-tts`, run `foks-tts-setup` again (macOS asks for the permissions again, because the app is
+rebuilt and ad-hoc signed). `foks-tts-setup --remove` removes the app copy and its settings; then `brew uninstall foks-tts`.
+
 The installer builds an isolated Python 3.13 environment from a hash-locked requirements file, downloads the Kokoro
 model at a pinned revision and verifies its SHA-256, speaks a test sentence offline, then builds **FOKS TTS.app**
 and installs it to `~/Applications`. Everything else lives in `~/Library/Application Support/FOKS-TTS`.

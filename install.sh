@@ -19,8 +19,9 @@
 # directory and you pass --force.
 #
 # Environment (read by this script, not by the app):
+#   UV_PYTHON_PREFERENCE   default only-managed (uv downloads its own Python); a packager can set only-system
 #   FOKS_TTS_HOME   install somewhere other than ~/Library/Application Support/FOKS-TTS. The app reads only the
-#                   default location, so it is not built when this is set. Apps launched from Finder do not see
+#                   default location (or the Homebrew one), so it is not built when this is set. Apps launched from Finder do not see
 #                   shell variables anyway: point the app at other locations in its Settings > Engine locations.
 set -euo pipefail
 
@@ -68,7 +69,7 @@ if ! command -v uv >/dev/null; then
     die "uv is required. Install it with Homebrew (brew install uv) or see https://docs.astral.sh/uv/ and re-run."
   fi
 fi
-export UV_PYTHON_PREFERENCE=only-managed     # use uv's own Python, never Homebrew's or the system one
+export UV_PYTHON_PREFERENCE=${UV_PYTHON_PREFERENCE:-only-managed}   # default: uv's own Python, never Homebrew's or the system one (the Homebrew formula sets only-system)
 
 # ---- 2. Python environment --------------------------------------------------------------------------------
 VENV="$FOKS_HOME/venv"

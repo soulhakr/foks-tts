@@ -69,7 +69,12 @@ gotcha 1).
 | `install.sh`, `uninstall.sh`, `app/build_app.sh`, `app/install_local.sh` | installer, build, local install and Services registration |
 | `requirements/` | `core.lock` (69 hash-locked packages, no GPL), the optional GPL add-on lock, and `dev.lock` (test tools, not shipped) |
 
-Runtime layout: `~/Library/Application Support/FOKS-TTS/{venv,models/kokoro}`. The app reads **no environment
+Runtime layout: `~/Library/Application Support/FOKS-TTS/{venv,models/kokoro}`; if neither exists the app falls back to the
+Homebrew formula's engine at `/opt/homebrew/opt/foks-tts/libexec/engine/{venv,models/kokoro}` (`Settings.brewEngine`).
+The formula (`Formula/foks-tts.rb` in `soulhakr/homebrew-tap`) runs `install.sh --no-app` with `FOKS_TTS_HOME` set to that
+folder, builds the app with `app/build_app.sh`, and installs a `foks-tts-setup` command that calls `app/install_local.sh`.
+
+The app reads **no environment
 variables** (it is launched from Finder or launchd, which do not see the shell's). Instead, **Settings > Engine
 locations** stores two optional overrides in UserDefaults (`pythonOverride`: an interpreter or a venv folder;
 `modelDirOverride`: a Kokoro model folder), empty meaning the defaults above. The app sets `FOKS_TTS_MODEL_DIR` itself

@@ -1,10 +1,12 @@
 #!/bin/zsh
 # Install the built app into ~/Applications so macOS discovers its Services-menu entry, then refresh the
 # Services cache. (Services are only picked up from apps in standard locations, not from a build folder.)
+# Usage: install_local.sh [path to FOKS TTS.app]   (default: build/FOKS TTS.app; the Homebrew formula passes its own copy)
 set -e
+GIVEN=${1:+${1:A}}        # absolute path of the optional argument, resolved before the cd below
 cd "${0:A:h}"
-SRC="build/FOKS TTS.app"
-[[ -d "$SRC" ]] || { echo "Build first: ./build_app.sh"; exit 1; }
+SRC=${GIVEN:-build/FOKS TTS.app}
+[[ -d "$SRC" ]] || { echo "No app at: $SRC (build first with ./build_app.sh)"; exit 1; }
 DEST="$HOME/Applications/FOKS TTS.app"
 mkdir -p "$HOME/Applications"
 pkill -x FOKS-TTS 2>/dev/null || true

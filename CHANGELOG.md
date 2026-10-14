@@ -6,6 +6,16 @@ project uses [Semantic Versioning](https://semver.org/) (see `HANDOFF.md`). Add 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-14
+
+### Added
+- Homebrew support (formula in the `soulhakr/tap` tap): `brew install soulhakr/tap/foks-tts`, then `foks-tts-setup`
+  to copy the app into `~/Applications` and register the Services entry. The app now also looks for its Python
+  environment and model in the Homebrew install when nothing is under `~/Library/Application Support/FOKS-TTS`
+  (Settings overrides and an `install.sh` setup still take priority).
+- `app/install_local.sh` accepts the path of the app to install; `install.sh` honors `UV_PYTHON_PREFERENCE` so a
+  packager can use the system Python instead of uv's own.
+
 ## [0.1.1] - 2026-10-14
 
 First tagged release (source only: build it with `./install.sh`).
