@@ -10,6 +10,10 @@ real_*
 !app/Icon/MenuBarIcon@2x.png
 !brand/swatches.png
 !docs/icon.png
+# Rendered offscreen from the app (neutral demo paths, no desktop content): see README "Screenshots"
+!docs/menubar-icon.png
+!docs/settings-dark.png
+!docs/settings-light.png
 
 # Compiled Swift binary (the OCR step runs as an uncompiled script)
 vision_ocr

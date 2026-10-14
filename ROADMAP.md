@@ -50,3 +50,8 @@ contains no GPL code, so a DMG would not need a rewrite.
 ## Before the repository goes public
 
 - Run a real trademark and name search for "FOKS TTS" and the fox logo (there is already an unrelated `foks` Homebrew cask).
+- Run focus-group testing to workshop the app bundle name (the Finder caption, currently `FOKS TTS.app`) and the app
+  icon before release. A bare "Foks" would read as the upstream FOKS key-service project, so test candidate names for
+  distinctiveness as well as appeal. Changing the name touches `build_app.sh`, `install_local.sh`, `uninstall.sh` and
+  the docs, and can reset macOS permission grants; the bundle ID (`local.soulhakr.foks-tts`) and the project name can
+  stay as they are.

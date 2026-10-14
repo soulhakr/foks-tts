@@ -15,6 +15,19 @@ anywhere.
 
 <p align="center"><img src="docs/demo.gif" alt="A highlight following each word as it is spoken"></p>
 
+## Screenshots
+
+The menu bar icon, on a light and a dark menu bar (the app icon is at the top of this page):
+
+<p align="center"><img src="docs/menubar-icon.png" width="180" alt="The FOKS TTS menu bar icon, a fox head, on a light and a dark menu bar"></p>
+
+Settings, opened from the menu bar icon (**Settings…**, or ⌘,). Paths shown are from a demo folder, not a real home directory.
+
+<p align="center"><picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/settings-dark.png">
+  <img src="docs/settings-light.png" width="520" alt="The FOKS TTS Settings window: voice, speaking rate, reading options, shortcuts, extended pronunciation, engine locations and permissions">
+</picture></p>
+
 ## What it does
 
 - **Reads what you point at:** a window, a dragged area, the whole screen, the text you have selected, or an
@@ -48,6 +61,11 @@ and installs it to `~/Applications`. Everything else lives in `~/Library/Applica
 It is safe to re-run. Options: `--no-app` (environment and model only), `--force` (rebuild). To remove it all:
 `./uninstall.sh`.
 
+`install.sh` honors one environment variable, `FOKS_TTS_HOME`, to install somewhere other than the default folder. The
+app itself reads no environment variables (an app opened from Finder or launchd would not see your shell's anyway); to
+use an existing Python environment or Kokoro model folder, set them under **Settings > Engine locations**. The log
+(`~/Library/Logs/FOKS-TTS/foks.log`) records which locations are in effect at each launch.
+
 ## First run
 
 1. Open **FOKS TTS** from `~/Applications`. It lives in the menu bar (a fox head). On a Mac with a notch the
@@ -75,7 +93,8 @@ service reads with the floating controls but cannot highlight in place.
 
 **Settings** (from the menu bar icon): voice, speaking rate, where window text comes from (Accessibility, OCR or
 automatic), highlight color, whether to show the floating controls, whether to pause between titles, body text and
-buttons, whether to read button and control labels in windows, and the status of permissions.
+buttons, whether to read button and control labels in windows, the Python environment and Kokoro model folder to use
+(**Engine locations**), and the status of permissions.
 
 ## How it works
 

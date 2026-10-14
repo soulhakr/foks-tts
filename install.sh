@@ -17,6 +17,11 @@
 # Network is used only in steps 2 and 3 (PyPI, GitHub for the spaCy model and Python, Hugging Face for the model).
 # An existing setup, including a symlinked developer setup, is verified and left alone unless it is a real
 # directory and you pass --force.
+#
+# Environment (read by this script, not by the app):
+#   FOKS_TTS_HOME   install somewhere other than ~/Library/Application Support/FOKS-TTS. The app reads only the
+#                   default location, so it is not built when this is set. Apps launched from Finder do not see
+#                   shell variables anyway: point the app at other locations in its Settings > Engine locations.
 set -euo pipefail
 
 HERE=${0:A:h}
@@ -32,7 +37,7 @@ for arg in "$@"; do
   case $arg in
     --no-app) BUILD_APP=0 ;;
     --force)  FORCE=1 ;;
-    -h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $arg (try --help)"; exit 2 ;;
   esac
 done
