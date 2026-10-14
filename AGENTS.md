@@ -11,6 +11,8 @@ Essentials:
   built with `swiftc` from the Command Line Tools (`app/build_app.sh`). Do not use SwiftUI `@State`.
 - **Rebuilding resets macOS permissions** (ad-hoc signing). Batch changes and tell the maintainer when Accessibility and
   Screen Recording must be re-granted.
+- **CI** runs `make test` and `make build` on macOS 14 and 15 (`.github/workflows/ci.yml`). Keep it green; pin any new
+  action to a commit SHA.
 - **Offline only.** No cloud services or telemetry. Dependencies stay hash-locked (`--require-hashes`); regenerate
   `THIRD_PARTY_NOTICES.md` when requirements change. GPL packages are never bundled.
 - **Commits:** small and logical, imperative subject with a body that says why, repo-local git identity. Do not push,

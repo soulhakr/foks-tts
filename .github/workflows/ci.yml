@@ -1,0 +1,50 @@
+# Continuous integration: typecheck and unit tests, then build the app, on the oldest and a current macOS.
+# The headless Structure test (it needs the Kokoro model) is skipped here; run `make test` after `make build` locally.
+# Note: macOS runners use 10x minutes on private repositories (free on public ones), so this runs only on pushes to
+# main, pull requests and by hand.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15]      # macOS 14 is the minimum the app claims to support
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        run: brew install uv
+
+      - name: Shell scripts parse (zsh)
+        run: |
+          for f in install.sh uninstall.sh app/*.sh tools/*.sh; do
+            zsh -n "$f" && echo "ok  $f"
+          done
+
+      - name: Info.plist is valid
+        run: plutil -lint app/Info.plist
+
+      - name: Typecheck and unit tests
+        run: make test
+
+      - name: Build the app (ad-hoc signed)
+        run: make build

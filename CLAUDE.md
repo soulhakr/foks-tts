@@ -88,7 +88,7 @@ to install. The underlying commands:
 cd app && ./build_app.sh                       # build "build/FOKS TTS.app" (ad-hoc signed, Command Line Tools only)
 cd app && ./install_local.sh                   # copy to ~/Applications, enable and register the Services entry
 cd app && swiftc -swift-version 5 -typecheck Sources/*.swift     # fast compile check
-make test                                      # typecheck + pytest (29 tests; see below)
+make test                                      # typecheck + pytest (37 tests; see below)
 make bump VERSION=0.1.0                        # set the SemVer version and add 1 to the build number in app/Info.plist
 make release VERSION=0.1.0                     # source release: checks, tests, dist/ tarball + sha256, LOCAL tag; publishes nothing
 # headless check of OCR, structure, audio and highlight (no permissions, works offline):
@@ -104,6 +104,12 @@ synth retry, pause padding, the SineGen patch, the eSpeak stand-in) replace MLX 
 `tests/conftest.py`, so they need no model and run in about a second. `Structure` is Swift, so `tests/test_structure.py`
 drives the built app headlessly on `test_screenshot.png` and checks the title/body/control order and pauses; it is
 skipped unless `make build` has been run and the FOKS venv and model are installed.
+
+**CI** (`.github/workflows/ci.yml`): on pushes to main, pull requests and by hand, on macOS 14 (the supported minimum)
+and 15: `zsh -n` on the shell scripts, `plutil -lint`, `make test` (typecheck, the unit tests and the lock-file checks in
+`tests/test_locks.py`; the Structure integration test is skipped because there is no model), then `make build`. The
+scripts are zsh, which shellcheck does not support, hence `zsh -n`. Actions are pinned to a commit SHA. macOS runners
+cost 10x minutes on a private repository.
 
 Logs: `~/Library/Logs/FOKS-TTS/foks.log` (events, counts, timings; never screen text) and `$TMPDIR/foks-tts-worker.log`.
 Regenerate: icon (`cd app/Icon && swift make_icon.swift && iconutil -c icns AppIcon.iconset -o AppIcon.icns && rm -rf
