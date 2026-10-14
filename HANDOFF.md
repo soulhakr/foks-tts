@@ -46,21 +46,15 @@ pgrep -fl FOKS-TTS; tail -5 ~/Library/Logs/FOKS-TTS/foks.log   # is the app runn
 | Logs | `~/Library/Logs/FOKS-TTS/foks.log`, `$TMPDIR/foks-tts-worker.log` |
 | Planned work | `ROADMAP.md` and the "Open work" list in `CLAUDE.md` |
 
-## This machine (for reproducing bugs)
+## Testing notes
 
-- Apple M4 Pro, 24 GB, a notched built-in display plus two external monitors placed above and beside it (negative and
-  large coordinates; see gotcha 3 in `CLAUDE.md`). A menu bar manager hides the app's icon on the notched display, so use
-  the hotkeys. The Dock is at the bottom.
-- Screenshots come from Shottr, which copies to the clipboard after a capture; that pairs with the clipboard hotkey.
-- Only the Command Line Tools are required (Xcode.app exists but the build does not use it).
-
-## Local AI setup: do not disturb
-
-- `~/AI` is the maintainer's personal local-AI folder (LM Studio models, a Python environment, shell wrappers). It is
-  not part of this project and is not a git repo: never delete or restructure it without asking.
-- `~/Library/Application Support/FOKS-TTS/models/kokoro` is a **symlink** to `~/AI/kokoro` here. `install.sh` leaves
-  symlinks alone and `uninstall.sh` removes the link only; never `rm -rf` through it. The Python `venv` is a real
-  directory built from `requirements/core.lock`.
+- Displays can sit above or to the left of the primary one, which gives negative or large coordinates (see gotcha 3 in
+  `CLAUDE.md`); test window and area reading on a second display when you change capture or overlay code.
+- On a Mac with a notch, the menu bar icon can be hidden by a crowded bar or a menu bar manager; use the hotkeys.
+- Only the Command Line Tools are required to build; the build does not use Xcode.app.
+- `~/Library/Application Support/FOKS-TTS/venv` and `models/kokoro` may be **symlinks** on a developer machine (to an
+  existing Python environment or model folder). `install.sh` leaves symlinks alone and `uninstall.sh` removes the link
+  only; never `rm -rf` through one, and do not delete or restructure what it points to without asking.
 - The old command-line prototypes were removed from `main`; they are at the git tag `prototypes-v1` (see `ROADMAP.md`,
   bring-your-own vision model). The app and installer do not use `mlx-vlm` or Gemma.
 

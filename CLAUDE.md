@@ -18,7 +18,7 @@ the Mac, offline, on Apple silicon. The maintainer's GitHub handle is `soulhakr`
 
 ## State (at commit `989ad60`, pushed to the private remote 2026-10-13)
 
-Hand-tested by the maintainer on a notched MacBook plus two external monitors: window reading (Accessibility, with OCR
+Hand-tested by the maintainer on a notched MacBook with external monitors: window reading (Accessibility, with OCR
 fallback), area, whole screen, clipboard, selected-text reading (⌃⌥⌘T), the Services entry, the floating controls, voice
 and rate settings, and the installer (from scratch in a temp location, and re-run on an existing setup).
 
@@ -165,8 +165,8 @@ The demo GIF is made from headless snapshot frames of `test_screenshot.png` asse
     bottom, and composites the menu bar icon on a light and a dark strip. The script runs it over a demo home
     (`/Users/Shared/foks-demo`, deleted afterwards, with an executable `venv/bin/python`, `models/kokoro/config.json` and
     one empty file per voice) via `CFFIXED_USER_HOME`, so no real username appears in the paths.
-17. **His interactive zsh aliases `ls` (ANSI colors) and `mkdir` (verbose).** `$(ls ...)` yields escape codes in
-    names; use `find` or `command ls` in anything scripted.
+17. **Shell aliases change output.** An interactive zsh may alias `ls` (ANSI colors) or `mkdir` (verbose), so `$(ls ...)`
+    yields escape codes in names; in anything scripted use `find`, `command ls` or `command mkdir`.
 
 ## Conventions
 
