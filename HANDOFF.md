@@ -17,6 +17,14 @@ pgrep -fl FOKS-TTS; tail -5 ~/Library/Logs/FOKS-TTS/foks.log   # is the app runn
 
 3. Ask before any push, force-push, history rewrite, or making the repository public.
 
+## Identity and remote
+
+- Commit identity (repo-local config): `soulhakr <577508+soulhakr@users.noreply.github.com>`. The machine's **global** git
+  identity is a different one and must not be used here: if `git config user.email` inside the repo does not print the
+  noreply address, stop and fix the local config before committing.
+- `gh` is logged in as `soulhakr`. The remote is https://github.com/soulhakr/foks-tts and is **private**; it stays
+  private until the maintainer says otherwise. The copyright holder in `LICENSE` is the handle `soulhakr`.
+
 ## Working style
 
 - Short status and a recommendation with the reason; ask a question only when a decision is genuinely the
@@ -37,6 +45,41 @@ pgrep -fl FOKS-TTS; tail -5 ~/Library/Logs/FOKS-TTS/foks.log   # is the app runn
 | Runtime data | `~/Library/Application Support/FOKS-TTS` (venv and model; both can be overridden in Settings > Engine locations) |
 | Logs | `~/Library/Logs/FOKS-TTS/foks.log`, `$TMPDIR/foks-tts-worker.log` |
 | Planned work | `ROADMAP.md` and the "Open work" list in `CLAUDE.md` |
+
+## This machine (for reproducing bugs)
+
+- Apple M4 Pro, 24 GB, a notched built-in display plus two external monitors placed above and beside it (negative and
+  large coordinates; see gotcha 3 in `CLAUDE.md`). A menu bar manager hides the app's icon on the notched display, so use
+  the hotkeys. The Dock is at the bottom.
+- Screenshots come from Shottr, which copies to the clipboard after a capture; that pairs with the clipboard hotkey.
+- Only the Command Line Tools are required (Xcode.app exists but the build does not use it).
+
+## Local AI setup: do not disturb
+
+- `~/AI` is the maintainer's personal local-AI folder (LM Studio models, a Python environment, shell wrappers). It is
+  not part of this project and is not a git repo: never delete or restructure it without asking.
+- `~/Library/Application Support/FOKS-TTS/models/kokoro` is a **symlink** to `~/AI/kokoro` here. `install.sh` leaves
+  symlinks alone and `uninstall.sh` removes the link only; never `rm -rf` through it. The Python `venv` is a real
+  directory built from `requirements/core.lock`.
+- The legacy `screen_to_speech.sh` prototype needs the maintainer's `mlx-vlm` and a Gemma model (`MLX_VLM_BIN` and
+  `OCR_MODEL`, set per run). The app and installer do not use them.
+
+## Before the repository goes public
+
+In addition to the checklist in `ROADMAP.md`:
+
+- **GitHub keeps old commits.** After a history rewrite and force-push, GitHub can still serve the superseded commits by
+  SHA until it garbage-collects. If anything in history had to be removed, delete and recreate the repository from the
+  clean local history (cleanest), or ask GitHub Support to purge, before making it public.
+- **Audit history** for anything personal or machine-specific. It should print nothing except known false positives
+  (third-party license text in the lock files):
+
+```bash
+git log -p --all | grep -n -i -E "/Users/|$(whoami)|@(gmail|icloud|outlook|hotmail)\." | sort | uniq -c
+git log --all --format='%an <%ae>' | sort -u      # expect only the noreply identity
+```
+
+- Also check the working tree and the generated files (`THIRD_PARTY_NOTICES.md`, lock headers) for absolute home paths.
 
 ## Recent state
 
