@@ -65,6 +65,7 @@ gotcha 1).
 | `app/Sources/TTSWorker.swift`, `app/tts_worker.py`, `tts_core.py` | the voice worker client, protocol, and engine (chunking, per-word alignment, fixes) |
 | `app/Sources/Settings.swift`, `UI.swift`, `OptionalPackages.swift`, `Log.swift` | settings model (including the Python and model-folder overrides and their status checks), SwiftUI settings and floating controller, the optional GPL add-on installer, diagnostic log |
 | `app/Icon/make_icon.swift`, `brand/` | procedural icon and the palette (single source of truth: `brand/palette.json`) |
+| `CHANGELOG.md` | Keep a Changelog format; `make release` requires an entry for the version being released |
 | `install.sh`, `uninstall.sh`, `app/build_app.sh`, `app/install_local.sh` | installer, build, local install and Services registration |
 | `requirements/` | `core.lock` (69 hash-locked packages, no GPL), the optional GPL add-on lock, and `dev.lock` (test tools, not shipped) |
 

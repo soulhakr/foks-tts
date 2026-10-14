@@ -95,7 +95,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         serviceProvider.onText = { [weak self] text in self?.readText(text) }
         NSApp.servicesProvider = serviceProvider
         NSUpdateDynamicServices()
-        Log.write("---- launch: accessibility=\(AXText.trusted(prompt: false)) screenRecording=\(CGPreflightScreenCaptureAccess()) screens=\(NSScreen.screens.count)")
+        Log.write("---- launch: version \(AppInfo.version) accessibility=\(AXText.trusted(prompt: false)) screenRecording=\(CGPreflightScreenCaptureAccess()) screens=\(NSScreen.screens.count)")
         Log.write(Settings.locationSummary())
         runTestMode()
     }

@@ -54,7 +54,7 @@ bump:  ## set the version in app/Info.plist and add 1 to the build number: make 
 	@build=$$(plutil -extract CFBundleVersion raw -o - $(PLIST)); \
 	  sed -E -i '' -e "s#(<key>CFBundleShortVersionString</key><string>)[^<]*(</string>)#\1$(VERSION)\2#" \
 	    -e "s#(<key>CFBundleVersion</key><string>)[^<]*(</string>)#\1$$((build + 1))\2#" $(PLIST)
-	@git diff -U0 $(PLIST) | grep -E '^[-+] '; echo "Commit it, push, then: make release VERSION=$(VERSION)"
+	@git diff -U0 $(PLIST) | grep -E '^[-+] '; echo "Add a CHANGELOG.md entry for $(VERSION), commit, push, then: make release VERSION=$(VERSION)"
 
 release:  ## source release: make release VERSION=0.1.0 (checks, all tests incl. the built-app one, tarball + checksum in dist/, local tag; publishes nothing)
 	@test -n "$(VERSION)" || { echo "usage: make release VERSION=0.1"; exit 1; }
@@ -65,6 +65,7 @@ release:  ## source release: make release VERSION=0.1.0 (checks, all tests incl.
 	@if git rev-parse -q --verify "refs/tags/v$(VERSION)" >/dev/null; then echo "tag v$(VERSION) already exists"; exit 1; fi
 	@plist=$$(plutil -extract CFBundleShortVersionString raw -o - $(PLIST)); \
 	  test "$$plist" = "$(VERSION)" || { echo "$(PLIST) says $$plist: run 'make bump VERSION=$(VERSION)', commit and push"; exit 1; }
+	@grep -q '^## \[$(VERSION)\]' CHANGELOG.md || { echo "CHANGELOG.md has no '## [$(VERSION)]' entry: add one and commit"; exit 1; }
 	@new=$$(plutil -extract CFBundleVersion raw -o - $(PLIST)); prev=$$(git tag --list 'v*' --sort=-v:refname | head -1); \
 	  echo "$$new" | grep -Eq '^[0-9]+$$' || { echo "CFBundleVersion must be a whole number, is '$$new'"; exit 1; }; \
 	  if [ -n "$$prev" ]; then old=$$(git show "$${prev}:$(PLIST)" | plutil -extract CFBundleVersion raw -o - -); \

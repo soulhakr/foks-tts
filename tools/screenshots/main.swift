@@ -10,6 +10,11 @@ let args = CommandLine.arguments
 guard args.count == 3 else { FileHandle.standardError.write(Data("usage: render <out-dir> <MenuBarIcon@2x.png>\n".utf8)); exit(2) }
 let outDir = URL(fileURLWithPath: args[1])
 let iconURL = URL(fileURLWithPath: args[2])
+// the version shown in About comes from app/Info.plist (this harness runs without an app bundle)
+let infoURL = iconURL.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("Info.plist")
+if let info = NSDictionary(contentsOf: infoURL), let v = info["CFBundleShortVersionString"] as? String {
+    AppInfo.override = (info["CFBundleVersion"] as? String).map { "\(v) (build \($0))" } ?? v
+}
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 
@@ -42,18 +47,18 @@ func renderSettings(dark: Bool) -> NSBitmapImageRep {
     let status = StatusModel.shared
     status.frozen = true
     status.ready = true; status.axOK = true; status.scOK = true; status.espeak = true
-    let root = SettingsView(onPreview: {}, onInstallAddon: {}, onRemoveAddon: {}, height: 1500)
+    let root = SettingsView(onPreview: {}, onInstallAddon: {}, onRemoveAddon: {}, height: 1700)
         .environment(\.controlActiveState, .key)
     let vc = NSHostingController(rootView: root)
     let window = NSWindow(contentViewController: vc)
-    window.setContentSize(NSSize(width: 520, height: 1500))
+    window.setContentSize(NSSize(width: 520, height: 1700))
     window.appearance = app.appearance
     window.layoutIfNeeded()
     RunLoop.current.run(until: Date().addingTimeInterval(0.6))     // let SwiftUI lay out and the controls settle
     let view = vc.view
-    view.frame = NSRect(x: 0, y: 0, width: 520, height: 1500)
+    view.frame = NSRect(x: 0, y: 0, width: 520, height: 1700)
     view.layoutSubtreeIfNeeded()
-    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1040, pixelsHigh: 3000, bitsPerSample: 8, samplesPerPixel: 4,
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1040, pixelsHigh: 3400, bitsPerSample: 8, samplesPerPixel: 4,
                                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
     rep.size = view.bounds.size                                      // 2x: the PNG is 1040 px wide
     view.cacheDisplay(in: view.bounds, to: rep)

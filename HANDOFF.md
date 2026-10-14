@@ -88,7 +88,7 @@ git log --all --format='%an <%ae>' | sort -u      # expect only the noreply iden
   (`~/Library/Application Support/FOKS-TTS`) or the minimum macOS version; bump the **patch** version for fixes.
 - In `app/Info.plist`, `CFBundleShortVersionString` is the version and `CFBundleVersion` is a whole **build number**
   that goes up by one for every release and is never reused (update tools compare it). `make bump` sets both.
-- Flow: `make bump VERSION=0.1.0`, commit and push, `make build` (the release runs the built-app test and refuses a stale
+- Flow: `make bump VERSION=0.1.0`, add a `## [0.1.0]` entry to `CHANGELOG.md` (the release refuses without one), commit and push, `make build` (the release runs the built-app test and refuses a stale
   build), `make release VERSION=0.1.0` (checks, tests, `dist/` tarball and checksum, local tag). It publishes nothing:
   push the tag and create the GitHub release by hand.
 

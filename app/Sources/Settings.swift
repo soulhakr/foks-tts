@@ -12,6 +12,17 @@ struct VoiceGroup: Identifiable {
     let voices: [VoiceInfo]
 }
 
+/// The app's version, from Info.plist ("0.1.0 (build 1)"). `override` is for tools/screenshots, which has no bundle.
+enum AppInfo {
+    static var override: String?
+    static var version: String {
+        if let o = override { return o }
+        let d = Bundle.main.infoDictionary
+        guard let v = d?["CFBundleShortVersionString"] as? String else { return "development build" }
+        return (d?["CFBundleVersion"] as? String).map { "\(v) (build \($0))" } ?? v
+    }
+}
+
 final class Settings: ObservableObject {
     static let shared = Settings()
     /// ~/Library/Application Support/FOKS-TTS: `venv` (Python environment) and `models/kokoro` (model and voices).

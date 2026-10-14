@@ -192,6 +192,10 @@ struct SettingsView: View {
                     }
                 }
             }
+            Section("About") {
+                LabeledContent("Version", value: AppInfo.version)
+                LabeledContent("License", value: "MIT")
+            }
         }
         .formStyle(.grouped)
         .frame(width: 520, height: height)
