@@ -11,7 +11,7 @@ this file is the short orientation.
 ```bash
 git status && git log --oneline | head -5        # expect a clean tree on main
 git config user.email                            # expect the GitHub noreply address
-cd app && swiftc -swift-version 5 -typecheck Sources/*.swift && echo typecheck ok
+make typecheck && echo typecheck ok              # `make` lists all developer tasks
 pgrep -fl FOKS-TTS; tail -5 ~/Library/Logs/FOKS-TTS/foks.log   # is the app running; recent events
 ```
 

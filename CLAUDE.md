@@ -80,6 +80,9 @@ with the locations in effect and whether each is a default or an override (plus 
 
 ## Commands
 
+`make` lists the developer tasks (typecheck, build, install, check, notices, audit, clean); it is plain make with nothing
+to install. The underlying commands:
+
 ```bash
 ./install.sh [--no-app] [--force]              # full install (venv from core.lock, pinned model + SHA-256, smoke test, app)
 cd app && ./build_app.sh                       # build "build/FOKS TTS.app" (ad-hoc signed, Command Line Tools only)

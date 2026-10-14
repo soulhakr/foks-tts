@@ -6,7 +6,8 @@ Instructions for AI coding agents working in this repository. The full project c
 
 Essentials:
 
-- **Build check:** `cd app && swiftc -swift-version 5 -typecheck Sources/*.swift`. There is no Xcode project; the app is
+- **Tasks:** run `make` to list them. `make typecheck` is the fast check (no permission reset); `make build` and
+  `make install` rebuild the app. Underneath: `cd app && swiftc -swift-version 5 -typecheck Sources/*.swift`. There is no Xcode project; the app is
   built with `swiftc` from the Command Line Tools (`app/build_app.sh`). Do not use SwiftUI `@State`.
 - **Rebuilding resets macOS permissions** (ad-hoc signing). Batch changes and tell the maintainer when Accessibility and
   Screen Recording must be re-granted.
