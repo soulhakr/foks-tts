@@ -7,6 +7,7 @@ chunk in two halves.
 import os, re, sys, types
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 import numpy as np
+import mlx.core as mx
 from mlx_audio.tts.utils import load_model
 from mlx_audio.tts.models.kokoro.pipeline import KokoroPipeline
 

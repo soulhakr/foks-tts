@@ -15,8 +15,13 @@ sys.stdout = sys.stderr
 _here = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [_here, os.path.dirname(_here)]  # bundle Resources, or repo root in dev
 import numpy as np
+import mlx.core as mx
 from scipy.io import wavfile
 import tts_core as core
+
+# MLX keeps every freed GPU buffer in a cache that is unbounded by default (about 3 GB after one read, growing with
+# each one). Cap it and release it between reads so the worker stays near the size of the model.
+mx.set_cache_limit(256 * 1024 * 1024)
 
 jobs = queue.Queue()
 cancelled = set()
@@ -52,6 +57,8 @@ def run(job):
         send({"id": jid, "cancelled": True} if jid in cancelled else {"id": jid, "final": True})
     except Exception as e:  # noqa
         send({"id": jid, "error": str(e)})
+    finally:
+        mx.clear_cache()
 
 
 def main():
