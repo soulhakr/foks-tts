@@ -105,7 +105,7 @@ https://wordnet.princeton.edu/).
 
 ## Obtained or used but not distributed
 
-- **Python 3.13** (a uv-managed CPython build), downloaded at install time; Python Software Foundation License.
+- **Python 3.14** (a uv-managed CPython build), downloaded at install time; Python Software Foundation License.
 - **uv** (Astral), used by the installer; MIT or Apache-2.0.
 - **Apple system frameworks** (AppKit, SwiftUI, Vision, ScreenCaptureKit, AVFoundation, ApplicationServices) and
   SF Symbols names, used through the macOS SDK on the user's own Mac.

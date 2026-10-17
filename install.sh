@@ -8,7 +8,7 @@
 # What it does (idempotent; safe to re-run):
 #   1. checks macOS 14+, Apple silicon, the Command Line Tools and `uv`
 #   2. creates ~/Library/Application Support/FOKS-TTS/venv from the hash-locked requirements/core.lock
-#      (a uv-managed Python 3.13; no system Python, no GPL packages)
+#      (a uv-managed Python 3.14; no system Python, no GPL packages)
 #   3. downloads the Kokoro-82M model at a pinned revision into .../FOKS-TTS/models/kokoro and verifies
 #      its SHA-256
 #   4. speaks a test sentence completely offline
@@ -82,8 +82,8 @@ elif [[ -L $VENV ]]; then
   warn "$VENV is a symlink (a developer setup); leaving it alone even with --force"
 else
   [[ -e $VENV ]] && { say "Removing the existing environment (--force)"; rm -rf "$VENV"; }
-  say "Creating the Python 3.13 environment (this downloads about 460 MB the first time)"
-  uv venv --python 3.13 "$VENV"
+  say "Creating the Python 3.14 environment (this downloads about 460 MB the first time)"
+  uv venv --python 3.14 "$VENV"
   uv pip install --python "$PY" --require-hashes --no-deps -r "$HERE/requirements/core.lock"
 fi
 "$PY" -c "import mlx.core, mlx_audio, misaki, scipy" 2>/dev/null \

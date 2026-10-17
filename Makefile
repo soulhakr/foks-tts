@@ -20,7 +20,7 @@ typecheck:  ## fast Swift compile check (no build, no permission reset)
 
 # The test environment: hash-locked (requirements/dev.lock), project-local, rebuilt only when the lock changes.
 $(DEV)/.installed: requirements/dev.lock
-	UV_PYTHON_PREFERENCE=only-managed uv venv --clear --python 3.13 $(DEV)
+	UV_PYTHON_PREFERENCE=only-managed uv venv --clear --python 3.14 $(DEV)
 	uv pip install --python $(DEV)/bin/python --require-hashes --no-deps -r requirements/dev.lock
 	@touch $@
 

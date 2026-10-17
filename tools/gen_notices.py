@@ -94,7 +94,7 @@ w("text normalizer. Per its model card it was trained from OntoNotes 5 (https://
 w("the ClearNLP constituent-to-dependency conversion (Emory University) and WordNet 3.0 (Princeton University,")
 w("https://wordnet.princeton.edu/).\n")
 w("## Obtained or used but not distributed\n")
-w("- **Python 3.13** (a uv-managed CPython build), downloaded at install time; Python Software Foundation License.")
+w("- **Python 3.14** (a uv-managed CPython build), downloaded at install time; Python Software Foundation License.")
 w("- **uv** (Astral), used by the installer; MIT or Apache-2.0.")
 w("- **Apple system frameworks** (AppKit, SwiftUI, Vision, ScreenCaptureKit, AVFoundation, ApplicationServices) and")
 w("  SF Symbols names, used through the macOS SDK on the user's own Mac.")

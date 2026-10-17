@@ -65,7 +65,7 @@ foks-tts-setup                         # copies FOKS TTS.app into ~/Applications
 After `brew upgrade foks-tts`, run `foks-tts-setup` again (macOS asks for the permissions again, because the app is
 rebuilt and ad-hoc signed). `foks-tts-setup --remove` removes the app copy and its settings; then `brew uninstall foks-tts`.
 
-The installer builds an isolated Python 3.13 environment from a hash-locked requirements file, downloads the Kokoro
+The installer builds an isolated Python 3.14 environment from a hash-locked requirements file, downloads the Kokoro
 model at a pinned revision and verifies its SHA-256, speaks a test sentence offline, then builds **FOKS TTS.app**
 and installs it to `~/Applications`. Everything else lives in `~/Library/Application Support/FOKS-TTS`.
 It is safe to re-run. Options: `--no-app` (environment and model only), `--force` (rebuild). To remove it all:

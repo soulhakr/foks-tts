@@ -80,7 +80,7 @@ locations** stores two optional overrides in UserDefaults (`pythonOverride`: an 
 `modelDirOverride`: a Kokoro model folder), empty meaning the defaults above. The app sets `FOKS_TTS_MODEL_DIR` itself
 when it starts the worker, restarts the worker (debounced 1 s) when either changes, and logs one line at each launch
 with the locations in effect and whether each is a default or an override (plus any `FOKS_TTS_*` variables it ignores).
-`FOKS_TTS_HOME` is read only by `install.sh` and `tts_core.py`. Python 3.13 (uv-managed), mlx
+`FOKS_TTS_HOME` is read only by `install.sh` and `tts_core.py`. Python 3.14 (uv-managed; 3.15 has no wheels for mlx, numpy, scipy or spaCy yet), mlx
 0.32.0, mlx-audio 0.4.4, misaki 0.9.4, spaCy 3.8.16.
 
 ## Commands

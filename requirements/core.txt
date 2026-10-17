@@ -1,4 +1,4 @@
-# Core runtime for the offline reader (no GPL-licensed packages). Python 3.13, macOS arm64.
+# Core runtime for the offline reader (no GPL-licensed packages). Python 3.14, macOS arm64.
 addict==2.4.0
 annotated-doc==0.0.4
 annotated-types==0.8.0

@@ -6,6 +6,14 @@ project uses [Semantic Versioning](https://semver.org/) (see `HANDOFF.md`). Add 
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-17
+
+### Changed
+- New installs use **Python 3.14** (was 3.13): `install.sh`, the Homebrew formula and the developer environment. The
+  hash-locked requirements are unchanged (they already carry hashes for the 3.14 wheels), and speed and memory use are
+  the same. Existing 3.13 environments keep working; `./install.sh --force` rebuilds one on 3.14. Python 3.15 is not
+  supported yet: `mlx`, `numpy`, `scipy` and `spaCy` have no wheels for it.
+
 ## [0.2.0] - 2026-10-14
 
 ### Added
